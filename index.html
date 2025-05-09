@@ -561,7 +561,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">3</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">4</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -601,7 +601,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">3</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">4</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -622,42 +622,30 @@
                 
 
                 
-                    
-                
 
                 
-                    <div id="home-article-thumbnail" class="home-article-thumbnail relative h-[150px] overflow-hidden rounded-t-large">
-                        <a href="/2025/05/07/%E8%AE%B0%E6%9F%90%E8%8A%82%E6%8B%8D%E5%99%A8app%E7%9A%84%E4%B8%80%E6%AC%A1%E7%AE%80%E5%8D%95%E7%A0%B4%E8%A7%A3/">
-                            <img src="/2025/05/07/%E8%AE%B0%E6%9F%90%E8%8A%82%E6%8B%8D%E5%99%A8app%E7%9A%84%E4%B8%80%E6%AC%A1%E7%AE%80%E5%8D%95%E7%A0%B4%E8%A7%A3/5.png" alt="记某节拍器app的一次简单破解" class="w-full h-full object-cover dark:brightness-75 transition-all" />
-                        </a>
-                    </div>
-                
-                <div class="flex flex-col gap-5 px-7 pb-7 pt-5">
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
                     <h3 class="home-article-title">
-                        <a href="/2025/05/07/%E8%AE%B0%E6%9F%90%E8%8A%82%E6%8B%8D%E5%99%A8app%E7%9A%84%E4%B8%80%E6%AC%A1%E7%AE%80%E5%8D%95%E7%A0%B4%E8%A7%A3/">
-                            记某节拍器app的一次简单破解
+                        <a href="/2025/05/09/%E6%9F%90app%E7%9A%84libmsaoaidsec-so%E7%BB%95%E8%BF%87%E5%A7%BF%E5%8A%BF/">
+                            app常见的libmsaoaidsec.so绕过姿势
                         </a>
                     </h3>
 
                     <div class="home-article-content markdown-body">
                         
                             
-                            一个适合练手的小app，不涉及native层的分析
-jadx打开，直接搜索vip字符串
-
-定位到com.eumlab.prometronome.baselib.util.UserCache的isPro方法
-这里把hook掉isPro的返回值为true就可以直接使用vip功能了
-
-但是点进去用户界面会直接闪退，应该是后续对user中CustomerVip的实例进行了操作，但我们直接hook的i...
+                            最近在学习安卓逆向的时候遇到了libmsaoaidsec.so导致无法frida注入，这里自己收集了一些绕过的方法，如有错误的地方还请各位大佬指正
+hook pthread_create[原创]【安卓逆向】libmsaoaidsec.so反调试及算法逆向案例(爱库存)-Android安全-看雪-安全社区|安全招聘|kanxue.com
+用frida先注入一下，可以看到在输出hello之后直接...
                         
                     </div>
 
                     <div class="home-article-meta-info-container">
     <div class="home-article-meta-info">
         <span><i class="fa-solid fa-calendars"></i>&nbsp;
-            <span class="home-article-date" data-date="Wed May 07 2025 17:27:39 GMT+0800">
+            <span class="home-article-date" data-date="Fri May 09 2025 16:29:16 GMT+0800">
                 
-                    2025-05-07
+                    2025-05-09
                 
             </span>
         </span>
@@ -687,7 +675,7 @@ jadx打开，直接搜索vip字符串
         
     </div>
 
-    <a href="/2025/05/07/%E8%AE%B0%E6%9F%90%E8%8A%82%E6%8B%8D%E5%99%A8app%E7%9A%84%E4%B8%80%E6%AC%A1%E7%AE%80%E5%8D%95%E7%A0%B4%E8%A7%A3/">阅读全文<span class="seo-reader-text">记某节拍器app的一次简单破解</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+    <a href="/2025/05/09/%E6%9F%90app%E7%9A%84libmsaoaidsec-so%E7%BB%95%E8%BF%87%E5%A7%BF%E5%8A%BF/">阅读全文<span class="seo-reader-text">app常见的libmsaoaidsec.so绕过姿势</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
 </div>
 
                 </div>
@@ -703,14 +691,163 @@ jadx打开，直接搜索vip字符串
 
                 
                     <div id="home-article-thumbnail" class="home-article-thumbnail relative h-[150px] overflow-hidden rounded-t-large">
-                        <a href="/2025/05/07/N1-Junoir-2025-Reverse-Writeup/">
-                            <img src="/2025/05/07/N1-Junoir-2025-Reverse-Writeup/0.png" alt="N1 Junoir 2025 Reverse Writeup" class="w-full h-full object-cover dark:brightness-75 transition-all" />
+                        <a href="/2025/04/09/%E8%AE%B0%E6%9F%90%E8%8A%82%E6%8B%8D%E5%99%A8app%E7%9A%84%E4%B8%80%E6%AC%A1%E7%AE%80%E5%8D%95%E7%A0%B4%E8%A7%A3/">
+                            <img src="/2025/04/09/%E8%AE%B0%E6%9F%90%E8%8A%82%E6%8B%8D%E5%99%A8app%E7%9A%84%E4%B8%80%E6%AC%A1%E7%AE%80%E5%8D%95%E7%A0%B4%E8%A7%A3/5.png" alt="记某节拍器app的一次简单破解" class="w-full h-full object-cover dark:brightness-75 transition-all" />
                         </a>
                     </div>
                 
                 <div class="flex flex-col gap-5 px-7 pb-7 pt-5">
                     <h3 class="home-article-title">
-                        <a href="/2025/05/07/N1-Junoir-2025-Reverse-Writeup/">
+                        <a href="/2025/04/09/%E8%AE%B0%E6%9F%90%E8%8A%82%E6%8B%8D%E5%99%A8app%E7%9A%84%E4%B8%80%E6%AC%A1%E7%AE%80%E5%8D%95%E7%A0%B4%E8%A7%A3/">
+                            记某节拍器app的一次简单破解
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            一个适合练手的小app，不涉及native层的分析
+jadx打开，直接搜索vip字符串
+
+定位到com.eumlab.prometronome.baselib.util.UserCache的isPro方法
+这里把hook掉isPro的返回值为true就可以直接使用vip功能了
+
+但是点进去用户界面会直接闪退，应该是后续对user中CustomerVip的实例进行了操作，但我们直接hook的i...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Wed Apr 09 2025 17:27:39 GMT+0800">
+                
+                    2025-04-09
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/04/09/%E8%AE%B0%E6%9F%90%E8%8A%82%E6%8B%8D%E5%99%A8app%E7%9A%84%E4%B8%80%E6%AC%A1%E7%AE%80%E5%8D%95%E7%A0%B4%E8%A7%A3/">阅读全文<span class="seo-reader-text">记某节拍器app的一次简单破解</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
+        
+            <li class="home-article-item">
+
+                
+
+                
+                    
+                
+
+                
+                    <div id="home-article-thumbnail" class="home-article-thumbnail relative h-[150px] overflow-hidden rounded-t-large">
+                        <a href="/2025/03/02/NCTF-2024-Reverse-Writeup/">
+                            <img src="/2025/03/02/NCTF-2024-Reverse-Writeup/0.png" alt="NCTF 2024 Reverse Writeup" class="w-full h-full object-cover dark:brightness-75 transition-all" />
+                        </a>
+                    </div>
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-5">
+                    <h3 class="home-article-title">
+                        <a href="/2025/03/02/NCTF-2024-Reverse-Writeup/">
+                            NCTF 2024 Reverse Writeup
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            
+x1login
+checkSecutity检测了root和debug，直接frida绕过
+123456789101112function anti_debug()&#123;    Java.perform(function() &#123;        var MainActivity = Java.use(&quot;com.nctf.simplelogin.MainActivity...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Sun Mar 02 2025 16:03:14 GMT+0800">
+                
+                    2025-03-02
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/CTF/">CTF</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/writeup/">writeup</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/03/02/NCTF-2024-Reverse-Writeup/">阅读全文<span class="seo-reader-text">NCTF 2024 Reverse Writeup</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
+        
+            <li class="home-article-item">
+
+                
+
+                
+                    
+                
+
+                
+                    <div id="home-article-thumbnail" class="home-article-thumbnail relative h-[150px] overflow-hidden rounded-t-large">
+                        <a href="/2025/02/12/N1-Junoir-2025-Reverse-Writeup/">
+                            <img src="/2025/02/12/N1-Junoir-2025-Reverse-Writeup/0.png" alt="N1 Junoir 2025 Reverse Writeup" class="w-full h-full object-cover dark:brightness-75 transition-all" />
+                        </a>
+                    </div>
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-5">
+                    <h3 class="home-article-title">
+                        <a href="/2025/02/12/N1-Junoir-2025-Reverse-Writeup/">
                             N1 Junoir 2025 Reverse Writeup
                         </a>
                     </h3>
@@ -730,82 +867,9 @@ jadx打开，直接搜索vip字符串
                     <div class="home-article-meta-info-container">
     <div class="home-article-meta-info">
         <span><i class="fa-solid fa-calendars"></i>&nbsp;
-            <span class="home-article-date" data-date="Wed May 07 2025 16:25:05 GMT+0800">
+            <span class="home-article-date" data-date="Wed Feb 12 2025 16:25:05 GMT+0800">
                 
-                    2025-05-07
-                
-            </span>
-        </span>
-        
-        
-            <span class="home-article-tag">
-                <i class="fa-solid fa-tags"></i>&nbsp;
-                <ul>
-                    
-                        <li>
-                            
-                            <a href="/tags/CTF/">CTF</a>&nbsp;
-                        </li>
-                    
-                        <li>
-                            | 
-                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
-                        </li>
-                    
-                        <li>
-                            | 
-                            <a href="/tags/writeup/">writeup</a>&nbsp;
-                        </li>
-                    
-                </ul>
-            </span>
-        
-    </div>
-
-    <a href="/2025/05/07/N1-Junoir-2025-Reverse-Writeup/">阅读全文<span class="seo-reader-text">N1 Junoir 2025 Reverse Writeup</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
-</div>
-
-                </div>
-            </li>
-        
-            <li class="home-article-item">
-
-                
-
-                
-                    
-                
-
-                
-                    <div id="home-article-thumbnail" class="home-article-thumbnail relative h-[150px] overflow-hidden rounded-t-large">
-                        <a href="/2025/05/07/NCTF-2024-Reverse-Writeup/">
-                            <img src="/2025/05/07/NCTF-2024-Reverse-Writeup/0.png" alt="NCTF 2024 Reverse Writeup" class="w-full h-full object-cover dark:brightness-75 transition-all" />
-                        </a>
-                    </div>
-                
-                <div class="flex flex-col gap-5 px-7 pb-7 pt-5">
-                    <h3 class="home-article-title">
-                        <a href="/2025/05/07/NCTF-2024-Reverse-Writeup/">
-                            NCTF 2024 Reverse Writeup
-                        </a>
-                    </h3>
-
-                    <div class="home-article-content markdown-body">
-                        
-                            
-                            
-x1login
-checkSecutity检测了root和debug，直接frida绕过
-123456789101112function anti_debug()&#123;    Java.perform(function() &#123;        var MainActivity = Java.use(&quot;com.nctf.simplelogin.MainActivity...
-                        
-                    </div>
-
-                    <div class="home-article-meta-info-container">
-    <div class="home-article-meta-info">
-        <span><i class="fa-solid fa-calendars"></i>&nbsp;
-            <span class="home-article-date" data-date="Wed May 07 2025 16:03:14 GMT+0800">
-                
-                    2025-05-07
+                    2025-02-12
                 
             </span>
         </span>
@@ -835,7 +899,7 @@ checkSecutity检测了root和debug，直接frida绕过
         
     </div>
 
-    <a href="/2025/05/07/NCTF-2024-Reverse-Writeup/">阅读全文<span class="seo-reader-text">NCTF 2024 Reverse Writeup</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+    <a href="/2025/02/12/N1-Junoir-2025-Reverse-Writeup/">阅读全文<span class="seo-reader-text">N1 Junoir 2025 Reverse Writeup</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
 </div>
 
                 </div>
@@ -871,7 +935,7 @@ checkSecutity检测了root和debug，直接frida绕过
                 
                 <p class="post-count space-x-0.5">
                     <span>
-                        共撰写了 3 篇文章
+                        共撰写了 4 篇文章
                     </span>
                     
                 </p>
