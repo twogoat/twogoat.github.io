@@ -539,7 +539,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">15</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">17</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -566,7 +566,7 @@
                 <div class="author flex flex-col justify-center my-2.5 mx-0">
     <div class="name">两只羊</div>
     
-        <div class="label">Lv2</div>
+        <div class="label">Lv3</div>
     
 </div>
                 <div class="statistics flex justify-around my-2.5">
@@ -579,7 +579,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">15</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">17</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -594,6 +594,142 @@
 			<div class="main-content">
 				<div class="home-content-container">
     <ul class="home-article-list">
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2025/05/16/%E6%9F%90%E8%88%AA%E7%A9%BAapp%E7%9A%84%E5%8D%8F%E8%AE%AE%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/">
+                            某航空app的协议逆向分析
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            前言本案例分析仅用于学习交流，禁止用于非法用途这个app是我在最近的逆向学习中，对自己来说比较困难的一个案例，其中涉及到frida检测，unidbg补环境，ollvm分析等一些之前不太熟悉的操作，在此记录一下自己的学习过程。
+抓包我们第一步对该app进行抓包分析，可以看到上传的参数全部被加密，看不出任何有效参数
+
+frida检测与脱壳在查看app的信息的时候，显示是360加固
+
+尝试使用fr...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Fri May 16 2025 17:34:05 GMT+0800">
+                
+                    2025-05-16
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/05/16/%E6%9F%90%E8%88%AA%E7%A9%BAapp%E7%9A%84%E5%8D%8F%E8%AE%AE%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/">阅读全文<span class="seo-reader-text">某航空app的协议逆向分析</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2025/05/15/Frida%E6%A3%80%E6%B5%8B%E4%B8%8Bfrida-dexdump%E7%9A%84%E4%BD%BF%E7%94%A8%E5%A7%BF%E5%8A%BF/">
+                            Frida检测下frida-dexdump的使用姿势
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            最近在逆向某app的时候，碰到了360加固，我这个刚入门的萌新只会frida-dexdump
+
+一把梭下去直接报错了
+
+看看加载了哪个so，发现是经典的libmsaoaidsec.so多线程反调
+
+直接hook clone绕过
+12345678910111213141516171819202122232425262728293031323334function nop_64(addr) &#...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Thu May 15 2025 16:25:13 GMT+0800">
+                
+                    2025-05-15
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/05/15/Frida%E6%A3%80%E6%B5%8B%E4%B8%8Bfrida-dexdump%E7%9A%84%E4%BD%BF%E7%94%A8%E5%A7%BF%E5%8A%BF/">阅读全文<span class="seo-reader-text">Frida检测下frida-dexdump的使用姿势</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
         
             <li class="home-article-item">
 
@@ -979,7 +1115,7 @@ checkSecutity检测了root和debug，直接frida绕过
                 
                 <p class="post-count space-x-0.5">
                     <span>
-                        共撰写了 15 篇文章
+                        共撰写了 17 篇文章
                     </span>
                     
                 </p>
