@@ -561,7 +561,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">17</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">18</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -601,7 +601,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">17</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">18</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -616,6 +616,66 @@
 			<div class="main-content">
 				<div class="home-content-container">
     <ul class="home-article-list">
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2026/02/25/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-3-%E5%9F%BA%E4%BA%8Ellvm-pass%E8%87%AA%E5%88%B6fla%E6%B7%B7%E6%B7%86/">
+                            从0到1的ollvm-3-基于llvm-pass自制fla混淆
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            MyOllvm大致思路对于每一个Function，我们要对其BasicBlock进行处理
+这里我把其Block类型大致分为入口点的EntryBlock，其他的普通分支BasicBlock，和返回块EndBlock
+
+我们要做的，就是在EntryBlock中新建一个SwitchValue变量，并建立一个SwitchValueBB块，根据当前SwitchValue的值，去控制下一个执行的Bloc...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Wed Feb 25 2026 12:10:27 GMT+0800">
+                
+                    2026-02-25
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2026/02/25/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-3-%E5%9F%BA%E4%BA%8Ellvm-pass%E8%87%AA%E5%88%B6fla%E6%B7%B7%E6%B7%86/">阅读全文<span class="seo-reader-text">从0到1的ollvm-3-基于llvm-pass自制fla混淆</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
         
             <li class="home-article-item">
 
@@ -1209,65 +1269,6 @@ https://github.com/yangyiyu08/ollvm-proje...
                 </div>
             </li>
         
-            <li class="home-article-item">
-
-                
-
-                
-
-                
-                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
-                    <h3 class="home-article-title">
-                        <a href="/2025/05/18/%E7%99%BD%E7%9B%92AES%E7%9A%84%E5%88%9D%E6%8E%A2/">
-                            白盒AES的初探
-                        </a>
-                    </h3>
-
-                    <div class="home-article-content markdown-body">
-                        
-                            
-                            众所周知，密码手需要考虑的东西很多，但逆向手只要学会一把梭就完事了
-main函数，首先进行一次标准的加密，然后进行16次的故障注入
-1234567891011121314151617181920212223242526272829303132333435//// Created by Liming Shao on 2018/4/24.//#include &lt;stdio.h&gt;#in...
-                        
-                    </div>
-
-                    <div class="home-article-meta-info-container">
-    <div class="home-article-meta-info">
-        <span><i class="fa-solid fa-calendars"></i>&nbsp;
-            <span class="home-article-date" data-date="Sun May 18 2025 13:09:41 GMT+0800">
-                
-                    2025-05-18
-                
-            </span>
-        </span>
-        
-        
-            <span class="home-article-tag">
-                <i class="fa-solid fa-tags"></i>&nbsp;
-                <ul>
-                    
-                        <li>
-                            
-                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
-                        </li>
-                    
-                        <li>
-                            | 
-                            <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
-                        </li>
-                    
-                </ul>
-            </span>
-        
-    </div>
-
-    <a href="/2025/05/18/%E7%99%BD%E7%9B%92AES%E7%9A%84%E5%88%9D%E6%8E%A2/">阅读全文<span class="seo-reader-text">白盒AES的初探</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
-</div>
-
-                </div>
-            </li>
-        
     </ul>
 
     <div class="home-paginator px-7 py-5">
@@ -1298,7 +1299,7 @@ main函数，首先进行一次标准的加密，然后进行16次的故障注�
                 
                 <p class="post-count space-x-0.5">
                     <span>
-                        共撰写了 17 篇文章
+                        共撰写了 18 篇文章
                     </span>
                     
                 </p>
