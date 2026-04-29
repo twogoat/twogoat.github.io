@@ -561,7 +561,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">18</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">19</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -601,7 +601,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">18</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">19</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -626,8 +626,69 @@
                 
                 <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
                     <h3 class="home-article-title">
+                        <a href="/2026/03/25/%E4%BB%8E0%E5%88%B01%E7%9A%84llvm%E5%AD%A6%E4%B9%A0-4-%E9%97%B4%E6%8E%A5%E8%B7%B3%E8%BD%AC%E6%B7%B7%E6%B7%86/">
+                            从0到1的llvm学习 (4) 间接跳转混淆
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            思路间接跳转混淆，就是将汇编的跳转或者跳转指令，变化为通过值计算得到地址，再通过jmp 寄存器的形式的混淆
+在现在Agent的能力下，其实单纯的CFF已很容易被分析了，但是遇到复杂的间接跳转控制流时，表现得还是不尽人意
+
+其实无论对于间接混淆还是别的混淆，最关键的一点就是要保证执行流的正常，并在此基础上做调整。
+我的方案是·，对于每一个块都有一个key，获取出加密后的后继偏移地址，然后经过一...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Wed Mar 25 2026 10:46:59 GMT+0800">
+                
+                    2026-03-25
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2026/03/25/%E4%BB%8E0%E5%88%B01%E7%9A%84llvm%E5%AD%A6%E4%B9%A0-4-%E9%97%B4%E6%8E%A5%E8%B7%B3%E8%BD%AC%E6%B7%B7%E6%B7%86/">阅读全文<span class="seo-reader-text">从0到1的llvm学习 (4) 间接跳转混淆</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
                         <a href="/2026/02/25/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-3-%E5%9F%BA%E4%BA%8Ellvm-pass%E8%87%AA%E5%88%B6fla%E6%B7%B7%E6%B7%86/">
-                            从0到1的ollvm-3-基于llvm-pass自制fla混淆
+                            从0到1的llvm学习 (3) 基于llvm-pass自制fla混淆
                         </a>
                     </h3>
 
@@ -671,7 +732,7 @@
         
     </div>
 
-    <a href="/2026/02/25/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-3-%E5%9F%BA%E4%BA%8Ellvm-pass%E8%87%AA%E5%88%B6fla%E6%B7%B7%E6%B7%86/">阅读全文<span class="seo-reader-text">从0到1的ollvm-3-基于llvm-pass自制fla混淆</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+    <a href="/2026/02/25/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-3-%E5%9F%BA%E4%BA%8Ellvm-pass%E8%87%AA%E5%88%B6fla%E6%B7%B7%E6%B7%86/">阅读全文<span class="seo-reader-text">从0到1的llvm学习 (3) 基于llvm-pass自制fla混淆</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
 </div>
 
                 </div>
@@ -787,12 +848,12 @@ tf卡的系统我刷的是Orangepi5plus_1.2.0_ubuntu_jammy_server，基本用不
                     
                         <li>
                             | 
-                            <a href="/tags/IOT/">IOT</a>&nbsp;
+                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
                         </li>
                     
                         <li>
                             | 
-                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                            <a href="/tags/IOT/">IOT</a>&nbsp;
                         </li>
                     
                 </ul>
@@ -912,12 +973,12 @@ htt...
                     
                         <li>
                             
-                            <a href="/tags/IOT/">IOT</a>&nbsp;
+                            <a href="/tags/CTF/">CTF</a>&nbsp;
                         </li>
                     
                         <li>
                             | 
-                            <a href="/tags/CTF/">CTF</a>&nbsp;
+                            <a href="/tags/IOT/">IOT</a>&nbsp;
                         </li>
                     
                 </ul>
@@ -979,12 +1040,12 @@ jadx打开，发现是Unity il2cpp写的app，（可以立马关闭jadx了）
                     
                         <li>
                             
-                            <a href="/tags/CTF/">CTF</a>&nbsp;
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
                         </li>
                     
                         <li>
                             | 
-                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                            <a href="/tags/CTF/">CTF</a>&nbsp;
                         </li>
                     
                         <li>
@@ -1077,7 +1138,7 @@ jadx打开，发现是Unity il2cpp写的app，（可以立马关闭jadx了）
                 <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
                     <h3 class="home-article-title">
                         <a href="/2025/06/01/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-2-ollvm%E9%AD%94%E6%94%B9%E5%B0%9D%E8%AF%95/">
-                            从0到1的ollvm (2) ollvm魔改尝试
+                            从0到1的llvm学习 (2) ollvm魔改尝试
                         </a>
                     </h3>
 
@@ -1129,7 +1190,7 @@ d810无法生效
         
     </div>
 
-    <a href="/2025/06/01/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-2-ollvm%E9%AD%94%E6%94%B9%E5%B0%9D%E8%AF%95/">阅读全文<span class="seo-reader-text">从0到1的ollvm (2) ollvm魔改尝试</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+    <a href="/2025/06/01/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-2-ollvm%E9%AD%94%E6%94%B9%E5%B0%9D%E8%AF%95/">阅读全文<span class="seo-reader-text">从0到1的llvm学习 (2) ollvm魔改尝试</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
 </div>
 
                 </div>
@@ -1145,7 +1206,7 @@ d810无法生效
                 <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
                     <h3 class="home-article-title">
                         <a href="/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
-                            从0到1的ollvm (1)ndk与llvm pass调试环境搭建
+                            从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建
                         </a>
                     </h3>
 
@@ -1191,79 +1252,7 @@ https://github.com/yangyiyu08/ollvm-proje...
         
     </div>
 
-    <a href="/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">阅读全文<span class="seo-reader-text">从0到1的ollvm (1)ndk与llvm pass调试环境搭建</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
-</div>
-
-                </div>
-            </li>
-        
-            <li class="home-article-item">
-
-                
-
-                
-
-                
-                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
-                    <h3 class="home-article-title">
-                        <a href="/2025/05/21/%E5%9B%A7%E6%AC%A1%E5%85%83%E5%8D%8F%E8%AE%AE%E5%88%86%E6%9E%90%E4%B8%8E%E7%A0%B4%E8%A7%A3/">
-                            囧次元协议分析与破解
-                        </a>
-                    </h3>
-
-                    <div class="home-article-content markdown-body">
-                        
-                            
-                            抓包分析抓包，发现响应被加密，且app-api-verify-sign需要分析
-
-定位到加密算法在com.toolboxvtwo.appleboxvtwo.utils.ApiEncryptUtils中
-
-通过nmap库的classes3Init0方法进行注册
-
-用ida打开
-
-用unidbg跑一下，发现果然动态注册了
-
-12345encryptData =&gt;  1747744848en...
-                        
-                    </div>
-
-                    <div class="home-article-meta-info-container">
-    <div class="home-article-meta-info">
-        <span><i class="fa-solid fa-calendars"></i>&nbsp;
-            <span class="home-article-date" data-date="Wed May 21 2025 19:41:27 GMT+0800">
-                
-                    2025-05-21
-                
-            </span>
-        </span>
-        
-        
-            <span class="home-article-tag">
-                <i class="fa-solid fa-tags"></i>&nbsp;
-                <ul>
-                    
-                        <li>
-                            
-                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
-                        </li>
-                    
-                        <li>
-                            | 
-                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
-                        </li>
-                    
-                        <li>
-                            | 
-                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
-                        </li>
-                    
-                </ul>
-            </span>
-        
-    </div>
-
-    <a href="/2025/05/21/%E5%9B%A7%E6%AC%A1%E5%85%83%E5%8D%8F%E8%AE%AE%E5%88%86%E6%9E%90%E4%B8%8E%E7%A0%B4%E8%A7%A3/">阅读全文<span class="seo-reader-text">囧次元协议分析与破解</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+    <a href="/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">阅读全文<span class="seo-reader-text">从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
 </div>
 
                 </div>
@@ -1299,7 +1288,7 @@ https://github.com/yangyiyu08/ollvm-proje...
                 
                 <p class="post-count space-x-0.5">
                     <span>
-                        共撰写了 18 篇文章
+                        共撰写了 19 篇文章
                     </span>
                     
                 </p>

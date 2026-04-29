@@ -13,7 +13,7 @@
     
     <!--- Seo Part-->
     
-    <link rel="canonical" href="https://twogoat.github.io/2025/06/20/某react-native-hermes的app逆向分析/"/>
+    <link rel="canonical" href="https://twogoat.github.io/2026/03/25/从0到1的llvm学习-4-间接跳转混淆/"/>
     <meta name="robots" content="index,follow">
     <meta name="googlebot" content="index,follow">
     <meta name="revisit-after" content="1 days">
@@ -21,32 +21,21 @@
     
     
         
-        <meta name="description" content="抓包抓包，对登录接口进行分析  12345678910111213141516171819202122POST &#x2F;nbs&#x2F;mob-server&#x2F;open-api&#x2F;mobile&#x2F;login HTTP&#x2F;1.1Host: private-api.cits.com.cnCookie: HWWAFSESTIME&#x3D;1750337873800; HWWAFSESID&#x3D;0142188ce78fac737bAcce">
+        <meta name="description" content="思路间接跳转混淆，就是将汇编的跳转或者跳转指令，变化为通过值计算得到地址，再通过jmp 寄存器的形式的混淆 在现在Agent的能力下，其实单纯的CFF已很容易被分析了，但是遇到复杂的间接跳转控制流时，表现得还是不尽人意  其实无论对于间接混淆还是别的混淆，最关键的一点就是要保证执行流的正常，并在此基础上做调整。 我的方案是·，对于每一个块都有一个key，获取出加密后的后继偏移地址，然后经过一个ke">
 <meta property="og:type" content="article">
-<meta property="og:title" content="某React Native Hermes的APP逆向分析">
-<meta property="og:url" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/index.html">
+<meta property="og:title" content="从0到1的llvm学习 (4) 间接跳转混淆">
+<meta property="og:url" content="https://twogoat.github.io/2026/03/25/%E4%BB%8E0%E5%88%B01%E7%9A%84llvm%E5%AD%A6%E4%B9%A0-4-%E9%97%B4%E6%8E%A5%E8%B7%B3%E8%BD%AC%E6%B7%B7%E6%B7%86/index.html">
 <meta property="og:site_name" content="twogoatの小站">
-<meta property="og:description" content="抓包抓包，对登录接口进行分析  12345678910111213141516171819202122POST &#x2F;nbs&#x2F;mob-server&#x2F;open-api&#x2F;mobile&#x2F;login HTTP&#x2F;1.1Host: private-api.cits.com.cnCookie: HWWAFSESTIME&#x3D;1750337873800; HWWAFSESID&#x3D;0142188ce78fac737bAcce">
+<meta property="og:description" content="思路间接跳转混淆，就是将汇编的跳转或者跳转指令，变化为通过值计算得到地址，再通过jmp 寄存器的形式的混淆 在现在Agent的能力下，其实单纯的CFF已很容易被分析了，但是遇到复杂的间接跳转控制流时，表现得还是不尽人意  其实无论对于间接混淆还是别的混淆，最关键的一点就是要保证执行流的正常，并在此基础上做调整。 我的方案是·，对于每一个块都有一个key，获取出加密后的后继偏移地址，然后经过一个ke">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620162741738.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620162416018.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620163006092.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620164236515.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620163727573.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620163224153.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620151603668.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620162454241.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620162510058.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620163945343.png">
-<meta property="og:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620164138820.png">
-<meta property="article:published_time" content="2025-06-20T08:57:36.000Z">
-<meta property="article:modified_time" content="2025-08-15T13:46:47.497Z">
+<meta property="og:image" content="https://twogoat.github.io/2026/03/25/%E4%BB%8E0%E5%88%B01%E7%9A%84llvm%E5%AD%A6%E4%B9%A0-4-%E9%97%B4%E6%8E%A5%E8%B7%B3%E8%BD%AC%E6%B7%B7%E6%B7%86/image-20260429104827423.png">
+<meta property="article:published_time" content="2026-03-25T02:46:59.000Z">
+<meta property="article:modified_time" content="2026-04-29T03:26:30.096Z">
 <meta property="article:author" content="twogoat&#x2F;showmaker">
-<meta property="article:tag" content="实战">
 <meta property="article:tag" content="Reverse">
-<meta property="article:tag" content="安卓">
+<meta property="article:tag" content="研究">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://twogoat.github.io/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620162741738.png">
+<meta name="twitter:image" content="https://twogoat.github.io/2026/03/25/%E4%BB%8E0%E5%88%B01%E7%9A%84llvm%E5%AD%A6%E4%B9%A0-4-%E9%97%B4%E6%8E%A5%E8%B7%B3%E8%BD%AC%E6%B7%B7%E6%B7%86/image-20260429104827423.png">
     
     
     <!--- Icon Part-->
@@ -58,7 +47,7 @@
     
     <title>
         
-            某React Native Hermes的APP逆向分析 | twogoat/showmakerの小站
+            从0到1的llvm学习 (4) 间接跳转混淆 | twogoat/showmakerの小站
         
     </title>
 
@@ -546,7 +535,7 @@
 		<div class="article-title relative w-full">
 			
 			<div class="w-full flex items-center pt-6 justify-start">
-				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">某React Native Hermes的APP逆向分析</h1>
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">从0到1的llvm学习 (4) 间接跳转混淆</h1>
 			</div>
 			
 		</div>
@@ -567,15 +556,15 @@
 					<div class="article-meta-info">
     <span class="article-date article-meta-item">
         <i class="fa-regular fa-pen-fancy"></i>&nbsp;
-        <span class="desktop">2025-06-20 16:57:36</span>
-        <span class="mobile">2025-06-20 16:57:36</span>
+        <span class="desktop">2026-03-25 10:46:59</span>
+        <span class="mobile">2026-03-25 10:46:59</span>
         <span class="hover-info">创建</span>
     </span>
     
         <span class="article-date article-meta-item">
             <i class="fa-regular fa-wrench"></i>&nbsp;
-            <span class="desktop">2025-08-15 21:46:47</span>
-            <span class="mobile">2025-08-15 21:46:47</span>
+            <span class="desktop">2026-04-29 11:26:30</span>
+            <span class="mobile">2026-04-29 11:26:30</span>
             <span class="hover-info">更新</span>
         </span>
     
@@ -587,15 +576,11 @@
             <ul>
                 
                     <li>
-                        <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                        <a href="/tags/Reverse/">Reverse</a>&nbsp;
                     </li>
                 
                     <li>
-                        | <a href="/tags/Reverse/">Reverse</a>&nbsp;
-                    </li>
-                
-                    <li>
-                        | <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                        | <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
                     </li>
                 
             </ul>
@@ -621,95 +606,51 @@
 
 
 		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
-			<h1 id="抓包"><a href="#抓包" class="headerlink" title="抓包"></a>抓包</h1><p>抓包，对登录接口进行分析</p>
+			<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><p>间接跳转混淆，就是将汇编的跳转或者跳转指令，变化为通过值计算得到地址，再通过jmp 寄存器的形式的混淆</p>
+<p>在现在Agent的能力下，其实单纯的CFF已很容易被分析了，但是遇到复杂的间接跳转控制流时，表现得还是不尽人意</p>
 <p><img  
                      lazyload
                      src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620162741738.png"
-                      alt="image-20250620162741738"
+                     data-src="/2026/03/25/%E4%BB%8E0%E5%88%B01%E7%9A%84llvm%E5%AD%A6%E4%B9%A0-4-%E9%97%B4%E6%8E%A5%E8%B7%B3%E8%BD%AC%E6%B7%B7%E6%B7%86/image-20260429104827423.png"
+                      alt="image-20260429104827423"
                 ></p>
-<div class="code-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable constant_">POST</span> /nbs/mob-server/open-api/mobile/login <span class="variable constant_">HTTP</span>/<span class="number">1.1</span></span><br><span class="line"><span class="title class_">Host</span>: private-api.<span class="property">cits</span>.<span class="property">com</span>.<span class="property">cn</span></span><br><span class="line"><span class="title class_">Cookie</span>: <span class="variable constant_">HWWAFSESTIME</span>=<span class="number">1750337873800</span>; <span class="variable constant_">HWWAFSESID</span>=0142188ce78fac737b</span><br><span class="line"><span class="title class_">Accept</span>: application/json</span><br><span class="line"><span class="title class_">Platform</span>: android</span><br><span class="line"><span class="title class_">Appname</span>: <span class="title class_">CTSApp</span></span><br><span class="line"><span class="title class_">Version</span>: <span class="number">5.2</span><span class="number">.9</span></span><br><span class="line"><span class="title class_">Bundleversion</span>: <span class="number">1</span></span><br><span class="line"><span class="title class_">Model</span>: <span class="variable constant_">M2007J22C</span></span><br><span class="line"><span class="title class_">Terminalcode</span>: <span class="number">02</span></span><br><span class="line"><span class="title class_">Devicecode</span>: cannon</span><br><span class="line"><span class="title class_">Screensize</span>: <span class="number">392.72727272727275</span>*<span class="number">785.8181818181819</span></span><br><span class="line"><span class="title class_">Language</span>: zh</span><br><span class="line"><span class="title class_">Vipflag</span>: <span class="number">1</span></span><br><span class="line"><span class="title class_">Os</span>: android</span><br><span class="line"><span class="title class_">Content</span>-<span class="title class_">Type</span>: application/json</span><br><span class="line"><span class="title class_">Content</span>-<span class="title class_">Length</span>: <span class="number">135</span></span><br><span class="line"><span class="title class_">Accept</span>-<span class="title class_">Encoding</span>: gzip, deflate, br</span><br><span class="line"><span class="title class_">User</span>-<span class="title class_">Agent</span>: okhttp/<span class="number">4.9</span><span class="number">.1</span></span><br><span class="line"><span class="title class_">Connection</span>: keep-alive</span><br><span class="line"></span><br><span class="line">&#123;<span class="string">&quot;systemId&quot;</span>:<span class="number">2201</span>,<span class="string">&quot;body&quot;</span>:<span class="string">&quot;TzHZ2jzXSO30CmwhrjqNJB3csrLBDQs1Z8Lp2DtB8E9IIvjWi+qyW8mO1ceVEi22vhNS9L4v4t6DcAbuqoh9UttptYG22YhBpxn1p5K2Kjk=&quot;</span>&#125;</span><br></pre></td></tr></table></figure></div>
+<p>其实无论对于间接混淆还是别的混淆，最关键的一点就是要保证执行流的正常，并在此基础上做调整。</p>
+<p>我的方案是·，对于每一个块都有一个key，获取出加密后的后继偏移地址，然后经过一个key XOR解密拿到真实偏移，再加上当前BasicBlock的地址，获得后继真实地址后进行跳转</p>
+<h2 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h2><p>那么老套路，我们第一步要做的，就是先获取每一个BasicBlock的后继，判断是直接跳转还是条件跳转（这里仍然暂时不考虑PHI和SwitchInst，因为最终可以降级处理）</p>
+<p>先给每一个BasicBlock赋一个Key，毕竟我们不可能直接明文存储后继</p>
+<p>这里我用了llvm独有的DenseMap，在处理llvm对象的时候似乎更有优势</p>
+<div class="code-container" data-rel="C++"><figure class="iseeu highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;BasicBlock*&gt; orignalBasicBlocks;</span><br><span class="line">      llvm::DenseMap&lt;BasicBlock*, <span class="type">uint64_t</span>&gt; basicBlockKey;</span><br><span class="line">      llvm::DenseSet&lt;<span class="type">uint64_t</span>&gt; usedKeySet;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">for</span>(BasicBlock&amp; bb: F) &#123;</span><br><span class="line">          orignalBasicBlocks.<span class="built_in">push_back</span>(&amp;bb);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">std::default_random_engine e;</span><br><span class="line">      <span class="function">std::uniform_int_distribution&lt;<span class="type">uint64_t</span>&gt; <span class="title">u</span><span class="params">(<span class="number">0</span>,<span class="number">0xFFFFFFFFFFFFFFFF</span>)</span></span>; <span class="comment">// 左闭右闭区间</span></span><br><span class="line">      e.<span class="built_in">seed</span>(<span class="built_in">time</span>(<span class="number">0</span>));</span><br><span class="line"></span><br><span class="line">      <span class="keyword">for</span>(BasicBlock* BB: orignalBasicBlocks) &#123;</span><br><span class="line">          <span class="type">uint64_t</span> RandomSwitchVal = <span class="built_in">u</span>(e);</span><br><span class="line">          <span class="keyword">while</span>(usedKeySet.<span class="built_in">find</span>(RandomSwitchVal) != usedKeySet.<span class="built_in">end</span>()) &#123;</span><br><span class="line">              RandomSwitchVal = <span class="built_in">u</span>(e);</span><br><span class="line">          &#125;</span><br><span class="line">          usedKeySet.<span class="built_in">insert</span>(RandomSwitchVal);</span><br><span class="line">          basicBlockKey[BB] = RandomSwitchVal;</span><br><span class="line">      &#125;</span><br></pre></td></tr></table></figure></div>
 
 
 
-<div class="code-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable constant_">HTTP</span>/<span class="number">1.1</span> <span class="number">200</span> <span class="variable constant_">OK</span></span><br><span class="line"><span class="title class_">Date</span>: <span class="title class_">Fri</span>, <span class="number">20</span> <span class="title class_">Jun</span> <span class="number">2025</span> <span class="number">02</span>:<span class="number">40</span>:<span class="number">38</span> <span class="variable constant_">GMT</span></span><br><span class="line"><span class="title class_">Content</span>-<span class="title class_">Type</span>: application/json</span><br><span class="line"><span class="title class_">Connection</span>: keep-alive</span><br><span class="line"><span class="title class_">Vary</span>: <span class="title class_">Origin</span></span><br><span class="line"><span class="title class_">Vary</span>: <span class="title class_">Access</span>-<span class="title class_">Control</span>-<span class="title class_">Request</span>-<span class="title class_">Method</span></span><br><span class="line"><span class="title class_">Vary</span>: <span class="title class_">Access</span>-<span class="title class_">Control</span>-<span class="title class_">Request</span>-<span class="title class_">Headers</span></span><br><span class="line"><span class="title class_">Cache</span>-<span class="title class_">Control</span>: no-cache, no-store, max-age=<span class="number">0</span>, must-revalidate</span><br><span class="line"><span class="title class_">Pragma</span>: no-cache</span><br><span class="line"><span class="title class_">Expires</span>: <span class="number">0</span></span><br><span class="line">X-<span class="title class_">Content</span>-<span class="title class_">Type</span>-<span class="title class_">Options</span>: nosniff</span><br><span class="line">X-<span class="title class_">Frame</span>-<span class="title class_">Options</span>: <span class="variable constant_">DENY</span></span><br><span class="line">X-<span class="variable constant_">XSS</span>-<span class="title class_">Protection</span>: <span class="number">1</span> ; mode=block</span><br><span class="line"><span class="title class_">Referrer</span>-<span class="title class_">Policy</span>: no-referrer</span><br><span class="line"><span class="title class_">Server</span>: <span class="variable constant_">CW</span></span><br><span class="line"><span class="title class_">Content</span>-<span class="title class_">Length</span>: <span class="number">1271</span></span><br><span class="line"></span><br><span class="line">&#123;<span class="string">&quot;body&quot;</span>:<span class="string">&quot;UanaDIA+KwagB6GtF7gdJa1ViTUjmePlwUPlIO1moZEzY6ahfbP+yQvhCGQVs920KbTYb69BCx/pt+cavrJOduqvIHXqcOq0IOzmzlVvB35v7avtrUm7S8FAXqC/CD0UOqzNMioaBpGAf6zOpHABSno7lAnr7Tw3vmH1SEs1YvabVbuSk6NFhY2IZcNY8tbdRD7sPhft/qAkvsKD+SR0sBlJsb8mbDa1m8AnD21zDxuiu8gF5/3/iPjYZ5LQ49qQyBHEWDOl7HV7koerqNtR7zz3AqPtl32nNRLYC13aQOKgedIv5Q33K8A92vieOeDFYVp8ks7p1ngQUinxu16wUd4jWSdNVyY/VYla/CmenJoGKQ3yt6Y6xcis58ZL+vPInQH7g7UUw//hnmNOMqobvAF5YoDk3WELr333WeiAN3NZqqzw5Oxjrh2pyKsg7Y6vAC6YFTfxzIZG0ACTh3ce1D09SFYMVmbqP/0P7oNVJHpsIkE6HxDE0bnamk9sQRd8LxjzI27AH//Q34ZWGtTO2G/rR7wCgTPUvPTxvmw0CDAC1m+X89uhPaCNZV4yYJ5m0njsmjJhqqj2hRdQRn4FC09AF8YYQ3BO9M36Xal5SQJShV2TBBGHkCJfxn8ZCljhx82rNA4fwuB4/Ol1sQOM0u+rtwpZi0IC42rP6OuqXIiLU3fMl7Bp++Zju/RK6ElwLyKRf80mi1yz7g0zHbb1HXYHJQeSNPl2RkH3C7w36xwdR+cjaFZskDLJSDjDDAvrCUb7ajw+sxPJdAAee6JvPhsbRPHHeooPR8fjyjft2synYH4kk56Ny6EfGH/7j/zrj7LOlZJbLW+otc0aNn5xn+LgR+53q3DiYzyHEqdCBqKfaVN3JHLb/vNImmcr9e1GGKQ+vuByttg1AfR4R8+169Z+94l65Mg/RxHcH9wCli7VTW5jKuKYDLEL8Yf2l14rfYfy35yA3Raf8F1ygt78ubo+nxx5Z99R42RhiEOpNm9OKMhBG4V4VwXchrP7HNZmst77hGAoMfN/hyltp0i7HhpAanmOCi3JkwRtk4xcNicKIZvRCmwDCskvXAkPeUTJbRzTzuVuIY456r4lmOnkDc5d2fBuKmvCByctI0SxqbdAKeTwvu5bgNN2Nx4Y+zB/7t2eTyxYcEQk3CKvj/d5AFFT/AhWtGEwD/mRmy91HY0Ddi7EsCurkdzM4OXtW3YpgRArIL7aJbnnyMK0pB9K7pMOcRyFl0AOVgbsuujAfJI=&quot;</span>&#125;</span><br></pre></td></tr></table></figure></div>
+<p>先处理并存储各Successor的地址</p>
+<p>这里注意要跳过entryBlock，因为在llvm pass中它的地址是不能拿来运算的，编译时会直接报错</p>
+<p>也就是说默认情况下，entryBlock只能保持原有的形式</p>
+<div class="code-container" data-rel="C++"><figure class="iseeu highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">BasicBlock* bb = orignalBasicBlocks[i];</span><br><span class="line">         Instruction* terminator = bb-&gt;<span class="built_in">getTerminator</span>();</span><br><span class="line">         <span class="keyword">if</span>(bb == entryBasicBlock) &#123;</span><br><span class="line">             <span class="keyword">continue</span>;</span><br><span class="line">         &#125;</span><br><span class="line"></span><br><span class="line">         <span class="keyword">if</span>(<span class="built_in">isa</span>&lt;ReturnInst&gt;(terminator)) &#123;</span><br><span class="line">             <span class="keyword">continue</span>;</span><br><span class="line">         &#125;</span><br><span class="line"></span><br><span class="line">         <span class="keyword">auto</span>* Br = <span class="built_in">dyn_cast</span>&lt;BranchInst&gt;(terminator);</span><br><span class="line">         <span class="keyword">if</span>(!Br) &#123;</span><br><span class="line">             <span class="keyword">continue</span>;</span><br><span class="line">         &#125;</span><br></pre></td></tr></table></figure></div>
 
 
 
-<h1 id="算法定位"><a href="#算法定位" class="headerlink" title="算法定位"></a>算法定位</h1><p>无壳无检测</p>
-<p>使用自吐脚本，发现一处调用AES_ECB加密，key 为f47a08b62bd90309</p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620162416018.png"
-                      alt="image-20250620162416018"
-                ></p>
-<p>key是通过ENCRYPT_CODE进行小写md5后，截取[8, 24]位的字符</p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620163006092.png"
-                      alt="image-20250620163006092"
-                ></p>
-<p>但是接着发现，，虽然该key能够解出请求的数据，但无法解密响应的数据</p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620164236515.png"
-                      alt="image-20250620164236515"
-                ></p>
-<p>而且经过分析，虽然app走了该encrypt函数，但其发包函数对应的压根就不是这条登录流量</p>
-<p>而是名为data&#x2F;tracking&#x2F;add的api，并没有什么用</p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620163727573.png"
-                      alt="image-20250620163727573"
-                ></p>
-<p>java层完全找不到更多相关的类</p>
-<h1 id="React-Native-Hermes分析"><a href="#React-Native-Hermes分析" class="headerlink" title="React Native Hermes分析"></a>React Native Hermes分析</h1><p>尝试搜索一波api字符串，发现只出现在index.android.bundle</p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620163224153.png"
-                      alt="image-20250620163224153"
-                ></p>
-<p>上网搜一下，发现是React Native Hermes，使用hbc-v84将其转化为Hermes字节码</p>
-<p><a class="link"   target="_blank" rel="noopener" href="https://github.com/niosega/hbctool/tree/draft/hbc-v84" >niosega&#x2F;hbctool at draft&#x2F;hbc-v84<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620151603668.png"
-                      alt="image-20250620151603668"
-                ></p>
-<p>搜素AES方法，发现encrypt函数，并有一串base64字符</p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620162454241.png"
-                      alt="image-20250620162454241"
-                ></p>
-<p>解出来发现就是EncryptImpl类中的ENCRYPT_CODE，那么猜测就是经过相同的变化</p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620162510058.png"
-                      alt="image-20250620162510058"
-                ></p>
-<p>接着拿到解密的ENCRYPT_CODE，并得到key为8e5f0fba84a43988</p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620163945343.png"
-                      alt="image-20250620163945343"
-                ></p>
-<p>解密响应成功</p>
-<p><img  
-                     lazyload
-                     src="/images/loading.svg"
-                     data-src="/2025/06/20/%E6%9F%90React-Native-Hermes%E7%9A%84APP%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/image-20250620164138820.png"
-                      alt="image-20250620164138820"
-                ></p>
+<p>然后是对地址值的计算，可以看到获取BlockAddress对象后，还需要通过ConstantExpr::getPtrToInt转化为Constant后才能参与运算</p>
+<p>经过多次尝试，这里的存储必要要存放在全局变量，如果存放在栈上，编译出来后将不会看到预计算好的结果，而是它把地址的计算式完整的保留了下来，后继地址直接暴露，起不到任何保护效果</p>
+<div class="code-container" data-rel="C++"><figure class="iseeu highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(Br-&gt;<span class="built_in">isUnconditional</span>()) &#123;</span><br><span class="line">    BasicBlock* successorBlock = terminator-&gt;<span class="built_in">getSuccessor</span>(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    BlockAddress* successorBlockAddress = BlockAddress::<span class="built_in">get</span>(successorBlock);</span><br><span class="line">    BlockAddress* curBlockAddress = BlockAddress::<span class="built_in">get</span>(bb);</span><br><span class="line">    <span class="comment">//errs() &lt;&lt; &quot;test\n&quot;;</span></span><br><span class="line">    IRBuilder&lt;&gt; <span class="built_in">builder</span>(bb);</span><br><span class="line">    <span class="comment">//Value* blockAddressValue = builder.CreatePtrToInt(blockAddress, builder.getInt64Ty());</span></span><br><span class="line">    Constant* curBlockAddressConstant = ConstantExpr::<span class="built_in">getPtrToInt</span>(curBlockAddress, builder.<span class="built_in">getInt64Ty</span>());</span><br><span class="line">    Constant* successorBlockAddressConstant = ConstantExpr::<span class="built_in">getPtrToInt</span>(successorBlockAddress, builder.<span class="built_in">getInt64Ty</span>());</span><br><span class="line">    Constant* subKey = ConstantExpr::<span class="built_in">getSub</span>(successorBlockAddressConstant, curBlockAddressConstant);</span><br><span class="line">    Constant* xorKey = ConstantInt::<span class="built_in">get</span>(builder.<span class="built_in">getInt64Ty</span>(), basicBlockKey[bb]);</span><br><span class="line">    Constant* secretKey = ConstantExpr::<span class="built_in">getXor</span>(subKey, xorKey);</span><br><span class="line">    </span><br><span class="line">    GlobalVariable* globalSubKey = <span class="keyword">new</span> <span class="built_in">GlobalVariable</span>(*M, builder.<span class="built_in">getInt64Ty</span>(), <span class="literal">true</span>, GlobalValue::InternalLinkage,secretKey, <span class="string">&quot;subKey&quot;</span> );</span><br><span class="line">    successorsSubKeyMap[bb].<span class="built_in">push_back</span>(globalSubKey);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>这里对于条件跳转的处理也类似</p>
+<div class="code-container" data-rel="C++"><figure class="iseeu highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">               BasicBlock* trueSuccessorBlock = terminator-&gt;<span class="built_in">getSuccessor</span>(<span class="number">0</span>);</span><br><span class="line">               BasicBlock* falseSuccessorBlock = terminator-&gt;<span class="built_in">getSuccessor</span>(<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">               BlockAddress* trueSuccessorBlockAddress = BlockAddress::<span class="built_in">get</span>(trueSuccessorBlock);</span><br><span class="line">               BlockAddress* falseSuccessorBlockAddress = BlockAddress::<span class="built_in">get</span>(falseSuccessorBlock);</span><br><span class="line"></span><br><span class="line">               BlockAddress* curBlockAddress = BlockAddress::<span class="built_in">get</span>(bb);</span><br><span class="line">               <span class="comment">//errs() &lt;&lt; &quot;test\n&quot;;</span></span><br><span class="line">               IRBuilder&lt;&gt; <span class="built_in">builder</span>(bb);</span><br><span class="line">               <span class="comment">//Value* blockAddressValue = builder.CreatePtrToInt(blockAddress, builder.getInt64Ty());</span></span><br><span class="line">               Constant* curBlockAddressConstant = ConstantExpr::<span class="built_in">getPtrToInt</span>(curBlockAddress, builder.<span class="built_in">getInt64Ty</span>());</span><br><span class="line">               Constant* xorKey = ConstantInt::<span class="built_in">get</span>(builder.<span class="built_in">getInt64Ty</span>(), basicBlockKey[bb]);</span><br><span class="line"></span><br><span class="line">               Constant* trueSuccessorBlockAddressConstant = ConstantExpr::<span class="built_in">getPtrToInt</span>(trueSuccessorBlockAddress, builder.<span class="built_in">getInt64Ty</span>());</span><br><span class="line">               Constant* trueSubKey = ConstantExpr::<span class="built_in">getSub</span>(trueSuccessorBlockAddressConstant, curBlockAddressConstant);</span><br><span class="line">               Constant* trueSecretKey = ConstantExpr::<span class="built_in">getXor</span>(trueSubKey, xorKey);</span><br><span class="line"></span><br><span class="line">               GlobalVariable* globalTrueSubKey = <span class="keyword">new</span> <span class="built_in">GlobalVariable</span>(*M, builder.<span class="built_in">getInt64Ty</span>(), <span class="literal">true</span>, GlobalValue::InternalLinkage,trueSecretKey, <span class="string">&quot;trueSubKey&quot;</span> );</span><br><span class="line">               successorsSubKeyMap[bb].<span class="built_in">push_back</span>(globalTrueSubKey);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">               Constant* falseSuccessorBlockAddressConstant = ConstantExpr::<span class="built_in">getPtrToInt</span>(falseSuccessorBlockAddress, builder.<span class="built_in">getInt64Ty</span>());</span><br><span class="line">               Constant* falseSubKey = ConstantExpr::<span class="built_in">getSub</span>(falseSuccessorBlockAddressConstant, curBlockAddressConstant);</span><br><span class="line">               Constant* falseSecretKey = ConstantExpr::<span class="built_in">getXor</span>(falseSubKey, xorKey);</span><br><span class="line"></span><br><span class="line">               GlobalVariable* globalFalseSubKey = <span class="keyword">new</span> <span class="built_in">GlobalVariable</span>(*M, builder.<span class="built_in">getInt64Ty</span>(), <span class="literal">true</span>, GlobalValue::InternalLinkage,falseSecretKey, <span class="string">&quot;falseSubKey&quot;</span> );</span><br><span class="line">               successorsSubKeyMap[bb].<span class="built_in">push_back</span>(globalFalseSubKey);</span><br><span class="line"></span><br><span class="line">           &#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<h2 id="块处理"><a href="#块处理" class="headerlink" title="块处理"></a>块处理</h2><p>上面已经处理好了偏移的计算表达式，并已经存放到全局变量的中了，那么记下来就是取值并计算再跳转的过程</p>
+<p>这里要十分注意的是，虽然我们已经通过CreateIndirectBr为块建立了一个terminator指令，但直接编译还是会报错，因为对于编译器来说，它不清楚你的这个计算地址是否有效。</p>
+<p>因为需要用indirectInst-&gt;addDestination(successorBlock)明确指向一个后继。</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*无条件跳转 */</span></span><br><span class="line"><span class="keyword">if</span>(Br-&gt;isUnconditional()) &#123;</span><br><span class="line">    <span class="comment">/*获取当前块的地址，并转化为可计算值 */</span></span><br><span class="line">    BasicBlock* successorBlock = terminator-&gt;getSuccessor(<span class="number">0</span>);</span><br><span class="line">    BlockAddress* curBlockAddress = BlockAddress::get(bb);</span><br><span class="line">    Value* basicBlockAddressValue = builder.CreatePtrToInt(curBlockAddress, builder.getInt64Ty());</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*获取加密后的偏移 */</span></span><br><span class="line">    GlobalVariable* globalSubKey = successorsSubKeyMap[bb][<span class="number">0</span>];</span><br><span class="line">    <span class="comment">//Value* gep = builder.CreateInBoundsGEP(builder.getInt64Ty(), globalSubKey, &#123;builder.getInt64(0), builder.getInt64(targetIdx)&#125;);</span></span><br><span class="line">    Value* loadSecretKey = builder.CreateLoad(Type::getInt64Ty(ctx), globalSubKey);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/*获取当前块的key，并解密出真实偏移*/</span></span><br><span class="line">    Value* xorKey = ConstantInt::get(builder.getInt64Ty(), basicBlockKey[bb]);</span><br><span class="line">    Value* loadSubKey = builder.CreateXor(loadSecretKey, xorKey);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/*计算得到真实后继地址，并进行跳转*/</span></span><br><span class="line">    Value* realBlockAddressValue = builder.CreateAdd(basicBlockAddressValue, loadSubKey);</span><br><span class="line">    Value* realBlockAddress = builder.CreateIntToPtr(realBlockAddressValue, builder.getInt8PtrTy());</span><br><span class="line">    IndirectBrInst* indirectInst = builder.CreateIndirectBr(realBlockAddress, <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">    indirectInst-&gt;addDestination(successorBlock);</span><br><span class="line">    terminator-&gt;eraseFromParent();</span><br><span class="line"></span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>然后条件跳转也类似，唯一不同的就是，从中取出true和false的不同加密偏移，要添加一个当前块Condition下的SelectInst，来选择需要解密的偏移。</p>
+<div class="code-container" data-rel="C++"><figure class="iseeu highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*条件跳转 */</span></span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">    BasicBlock* trueSuccessorBlock = terminator-&gt;<span class="built_in">getSuccessor</span>(<span class="number">0</span>);</span><br><span class="line">    BasicBlock* falseSuccessorBlock = terminator-&gt;<span class="built_in">getSuccessor</span>(<span class="number">1</span>);</span><br><span class="line">    BlockAddress* curBlockAddress = BlockAddress::<span class="built_in">get</span>(bb);</span><br><span class="line"></span><br><span class="line">    Value* basicBlockAddressValue = builder.<span class="built_in">CreatePtrToInt</span>(curBlockAddress, builder.<span class="built_in">getInt64Ty</span>());</span><br><span class="line">    <span class="comment">//Value* dynamicKey = builder.CreateLoad(builder.getInt64Ty(), XorKeyGV);</span></span><br><span class="line">    <span class="comment">//int targetIdx = i; </span></span><br><span class="line">    GlobalVariable* globalTrueSubKey = successorsSubKeyMap[bb][<span class="number">0</span>];</span><br><span class="line">    GlobalVariable* globalFalseSubKey = successorsSubKeyMap[bb][<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">    Value* loadTrueSubKey = builder.<span class="built_in">CreateLoad</span>(builder.<span class="built_in">getInt64Ty</span>(), globalTrueSubKey);</span><br><span class="line">    Value* loadFalseSubKey = builder.<span class="built_in">CreateLoad</span>(builder.<span class="built_in">getInt64Ty</span>(), globalFalseSubKey);</span><br><span class="line">    <span class="comment">//Value* gep = builder.CreateInBoundsGEP(builder.getInt64Ty(), globalSubKey, &#123;builder.getInt64(0), builder.getInt64(targetIdx)&#125;);</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/*获取当前块Terminator的Conditon，然后添加一个Select指令*/</span></span><br><span class="line">    Value* condition = Br-&gt;<span class="built_in">getCondition</span>();</span><br><span class="line">    Value* loadSecretKey = builder.<span class="built_in">CreateSelect</span>(condition, loadTrueSubKey, loadFalseSubKey);</span><br><span class="line">    </span><br><span class="line">    Constant* xorKey = ConstantInt::<span class="built_in">get</span>(builder.<span class="built_in">getInt64Ty</span>(), basicBlockKey[bb]);</span><br><span class="line">    Value* loadSubKey = builder.<span class="built_in">CreateXor</span>(loadSecretKey, xorKey);</span><br><span class="line">    <span class="comment">//Value* calcSubKey = builder.CreateXor(loadEncrypted, dynamicKey);</span></span><br><span class="line">    Value* realBlockAddressValue = builder.<span class="built_in">CreateAdd</span>(basicBlockAddressValue, loadSubKey);</span><br><span class="line">    Value* realBlockAddress = builder.<span class="built_in">CreateIntToPtr</span>(realBlockAddressValue, builder.<span class="built_in">getInt8PtrTy</span>());</span><br><span class="line">    IndirectBrInst* indirectInst = builder.<span class="built_in">CreateIndirectBr</span>(realBlockAddress, <span class="number">2</span>);</span><br><span class="line"></span><br><span class="line">    indirectInst-&gt;<span class="built_in">addDestination</span>(trueSuccessorBlock);</span><br><span class="line">    indirectInst-&gt;<span class="built_in">addDestination</span>(falseSuccessorBlock);</span><br><span class="line">    terminator-&gt;<span class="built_in">eraseFromParent</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
 
 		</div>
 
@@ -717,18 +658,18 @@
 		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
 			<div class="article-copyright-info-container">
     <ul>
-        <li><strong>标题:</strong> 某React Native Hermes的APP逆向分析</li>
+        <li><strong>标题:</strong> 从0到1的llvm学习 (4) 间接跳转混淆</li>
         <li><strong>作者:</strong> 两只羊</li>
         <li><strong>创建于
-                :</strong> 2025-06-20 16:57:36</li>
+                :</strong> 2026-03-25 10:46:59</li>
         
             <li>
                 <strong>更新于
-                    :</strong> 2025-08-15 21:46:47
+                    :</strong> 2026-04-29 11:26:30
             </li>
         
         <li>
-            <strong>链接:</strong> https://twogoat.github.io/2025/06/20/某React-Native-Hermes的APP逆向分析/
+            <strong>链接:</strong> https://twogoat.github.io/2026/03/25/从0到1的llvm学习-4-间接跳转混淆/
         </li>
         <li>
             <strong>
@@ -750,15 +691,11 @@
 		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
 			
 			<li class="tag-item mx-0.5">
-				<a href="/tags/%E5%AE%9E%E6%88%98/">#实战</a>&nbsp;
-			</li>
-			
-			<li class="tag-item mx-0.5">
 				<a href="/tags/Reverse/">#Reverse</a>&nbsp;
 			</li>
 			
 			<li class="tag-item mx-0.5">
-				<a href="/tags/%E5%AE%89%E5%8D%93/">#安卓</a>&nbsp;
+				<a href="/tags/%E7%A0%94%E7%A9%B6/">#研究</a>&nbsp;
 			</li>
 			
 		</ul>
@@ -769,23 +706,11 @@
 		
 		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
 			
-			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
-				<a class="prev" rel="prev" href="/2025/10/27/%E5%BC%BA%E7%BD%91%E6%8B%9F%E6%80%812025%E5%88%9D%E8%B5%9B-Mobile%E6%96%B9%E5%90%91just-Writeup/">
-					<span class="left arrow-icon flex justify-center items-center">
-						<i class="fa-solid fa-chevron-left"></i>
-					</span>
-					<span class="title flex justify-center items-center">
-						<span class="post-nav-title-item">强网拟态2025初赛 Mobile方向just Writeup</span>
-						<span class="post-nav-item">上一篇</span>
-					</span>
-				</a>
-			</div>
-			
 			
 			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
-				<a class="next" rel="next" href="/2025/06/01/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-2-ollvm%E9%AD%94%E6%94%B9%E5%B0%9D%E8%AF%95/">
+				<a class="next" rel="next" href="/2026/02/25/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-3-%E5%9F%BA%E4%BA%8Ellvm-pass%E8%87%AA%E5%88%B6fla%E6%B7%B7%E6%B7%86/">
 					<span class="title flex justify-center items-center">
-						<span class="post-nav-title-item">从0到1的llvm学习 (2) ollvm魔改尝试</span>
+						<span class="post-nav-title-item">从0到1的llvm学习 (3) 基于llvm-pass自制fla混淆</span>
 						<span class="post-nav-item">下一篇</span>
 					</span>
 					<span class="right arrow-icon flex justify-center items-center">
@@ -849,8 +774,8 @@
 		<div class="post-toc-wrap">
 	<div class="post-toc">
 		<div class="toc-title">目录</div>
-		<div class="page-title">某React Native Hermes的APP逆向分析</div>
-		<ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8A%93%E5%8C%85"><span class="nav-text">抓包</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%97%E6%B3%95%E5%AE%9A%E4%BD%8D"><span class="nav-text">算法定位</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#React-Native-Hermes%E5%88%86%E6%9E%90"><span class="nav-text">React Native Hermes分析</span></a></li></ol>
+		<div class="page-title">从0到1的llvm学习 (4) 间接跳转混淆</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF"><span class="nav-text">思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E5%A4%84%E7%90%86"><span class="nav-text">预处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9D%97%E5%A4%84%E7%90%86"><span class="nav-text">块处理</span></a></li></ol>
 
 	</div>
 </div>

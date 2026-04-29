@@ -23,7 +23,7 @@
         
         <meta name="description" content="最近在学习ollvm魔改的过程中，首先就被配环境困扰了好久现在就来总结一下 主要参考的是这位大佬的博客，照理来说跟着就可以了，这里补充自己的一些踩坑点 【清羽】Windows10下编译OLLVM-14.x_ollvm 编译优化后-CSDN博客 cmake，ninja用最新版的就好了 ollvm版本使用该大佬的 https:&#x2F;&#x2F;github.com&#x2F;yangyiyu08&#x2F;ollvm-project">
 <meta property="og:type" content="article">
-<meta property="og:title" content="从0到1的ollvm (1)ndk与llvm pass调试环境搭建">
+<meta property="og:title" content="从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建">
 <meta property="og:url" content="https://twogoat.github.io/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/index.html">
 <meta property="og:site_name" content="twogoatの小站">
 <meta property="og:description" content="最近在学习ollvm魔改的过程中，首先就被配环境困扰了好久现在就来总结一下 主要参考的是这位大佬的博客，照理来说跟着就可以了，这里补充自己的一些踩坑点 【清羽】Windows10下编译OLLVM-14.x_ollvm 编译优化后-CSDN博客 cmake，ninja用最新版的就好了 ollvm版本使用该大佬的 https:&#x2F;&#x2F;github.com&#x2F;yangyiyu08&#x2F;ollvm-project">
@@ -34,7 +34,7 @@
 <meta property="og:image" content="https://twogoat.github.io/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20250531170411508.png">
 <meta property="og:image" content="https://twogoat.github.io/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/image-20250531170727076.png">
 <meta property="article:published_time" content="2025-05-31T08:50:46.000Z">
-<meta property="article:modified_time" content="2026-01-13T04:32:03.656Z">
+<meta property="article:modified_time" content="2026-04-29T02:45:41.320Z">
 <meta property="article:author" content="twogoat&#x2F;showmaker">
 <meta property="article:tag" content="Reverse">
 <meta property="article:tag" content="研究">
@@ -51,7 +51,7 @@
     
     <title>
         
-            从0到1的ollvm (1)ndk与llvm pass调试环境搭建 | twogoat/showmakerの小站
+            从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建 | twogoat/showmakerの小站
         
     </title>
 
@@ -516,7 +516,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">18</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">19</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -539,7 +539,7 @@
 		<div class="article-title relative w-full">
 			
 			<div class="w-full flex items-center pt-6 justify-start">
-				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">从0到1的ollvm (1)ndk与llvm pass调试环境搭建</h1>
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建</h1>
 			</div>
 			
 		</div>
@@ -567,8 +567,8 @@
     
         <span class="article-date article-meta-item">
             <i class="fa-regular fa-wrench"></i>&nbsp;
-            <span class="desktop">2026-01-13 12:32:03</span>
-            <span class="mobile">2026-01-13 12:32:03</span>
+            <span class="desktop">2026-04-29 10:45:41</span>
+            <span class="mobile">2026-04-29 10:45:41</span>
             <span class="hover-info">更新</span>
         </span>
     
@@ -618,7 +618,7 @@
 <p><a class="link"   target="_blank" rel="noopener" href="https://github.com/yangyiyu08/ollvm-project" >https://github.com/yangyiyu08/ollvm-project<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></p>
 <p>gcc用visuial studio的会疯狂报错，必须使用llvm的clang工具</p>
 <p><a class="link"   target="_blank" rel="noopener" href="https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-x86_64.zip" >https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-x86_64.zip<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></p>
-<p>接着环境变量的设置，必须只保留llvm，将Visual studio的gcc删去</p>
+<p>接着环境变量的设置，必须只保留mingw，将Visual studio的gcc删去</p>
 <p><img  
                      lazyload
                      src="/images/loading.svg"
@@ -686,14 +686,14 @@
 		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
 			<div class="article-copyright-info-container">
     <ul>
-        <li><strong>标题:</strong> 从0到1的ollvm (1)ndk与llvm pass调试环境搭建</li>
+        <li><strong>标题:</strong> 从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建</li>
         <li><strong>作者:</strong> 两只羊</li>
         <li><strong>创建于
                 :</strong> 2025-05-31 16:50:46</li>
         
             <li>
                 <strong>更新于
-                    :</strong> 2026-01-13 12:32:03
+                    :</strong> 2026-04-29 10:45:41
             </li>
         
         <li>
@@ -740,7 +740,7 @@
 						<i class="fa-solid fa-chevron-left"></i>
 					</span>
 					<span class="title flex justify-center items-center">
-						<span class="post-nav-title-item">从0到1的ollvm (2) ollvm魔改尝试</span>
+						<span class="post-nav-title-item">从0到1的llvm学习 (2) ollvm魔改尝试</span>
 						<span class="post-nav-item">上一篇</span>
 					</span>
 				</a>
@@ -814,7 +814,7 @@
 		<div class="post-toc-wrap">
 	<div class="post-toc">
 		<div class="toc-title">目录</div>
-		<div class="page-title">从0到1的ollvm (1)ndk与llvm pass调试环境搭建</div>
+		<div class="page-title">从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建</div>
 		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E"><span class="nav-text">使用参数说明</span></a></li></ol>
 
 	</div>
@@ -842,7 +842,7 @@
                 
                 <p class="post-count space-x-0.5">
                     <span>
-                        共撰写了 18 篇文章
+                        共撰写了 19 篇文章
                     </span>
                     
                 </p>
