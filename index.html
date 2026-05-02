@@ -561,7 +561,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">19</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">20</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -601,7 +601,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">19</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">20</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -616,6 +616,73 @@
 			<div class="main-content">
 				<div class="home-content-container">
     <ul class="home-article-list">
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2026/04/30/%E4%BB%8E0%E5%88%B01%E7%9A%84llvm%E5%AD%A6%E4%B9%A0-4-%E7%AE%80%E6%98%93VMP%E5%BC%80%E5%8F%91/">
+                            从0到1的llvm学习 (5) 简易VMP开发
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            效果添加声明的函数都走vmEntry
+
+
+
+vmEntry添加CFF魔改后
+
+运行结果正确
+
+思路过去无论是在CTF题目中，还是在真实的APP分析中，总能看到各种各样的VM。
+就拿CTF来说，出题人要如何才能出一道VM题呢？
+对我而言，如果我要在VM里塞入一个较复杂的算法，像TEA，但是在编写完VM框架后又不想过多思考如何编写bytecode，所以我选择先用标准c语言编译一份标准的TEA算法...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Thu Apr 30 2026 09:43:10 GMT+0800">
+                
+                    2026-04-30
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2026/04/30/%E4%BB%8E0%E5%88%B01%E7%9A%84llvm%E5%AD%A6%E4%B9%A0-4-%E7%AE%80%E6%98%93VMP%E5%BC%80%E5%8F%91/">阅读全文<span class="seo-reader-text">从0到1的llvm学习 (5) 简易VMP开发</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
         
             <li class="home-article-item">
 
@@ -848,12 +915,12 @@ tf卡的系统我刷的是Orangepi5plus_1.2.0_ubuntu_jammy_server，基本用不
                     
                         <li>
                             | 
-                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                            <a href="/tags/IOT/">IOT</a>&nbsp;
                         </li>
                     
                         <li>
                             | 
-                            <a href="/tags/IOT/">IOT</a>&nbsp;
+                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
                         </li>
                     
                 </ul>
@@ -973,12 +1040,12 @@ htt...
                     
                         <li>
                             
-                            <a href="/tags/CTF/">CTF</a>&nbsp;
+                            <a href="/tags/IOT/">IOT</a>&nbsp;
                         </li>
                     
                         <li>
                             | 
-                            <a href="/tags/IOT/">IOT</a>&nbsp;
+                            <a href="/tags/CTF/">CTF</a>&nbsp;
                         </li>
                     
                 </ul>
@@ -1196,68 +1263,6 @@ d810无法生效
                 </div>
             </li>
         
-            <li class="home-article-item">
-
-                
-
-                
-
-                
-                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
-                    <h3 class="home-article-title">
-                        <a href="/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
-                            从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建
-                        </a>
-                    </h3>
-
-                    <div class="home-article-content markdown-body">
-                        
-                            
-                            最近在学习ollvm魔改的过程中，首先就被配环境困扰了好久现在就来总结一下
-主要参考的是这位大佬的博客，照理来说跟着就可以了，这里补充自己的一些踩坑点
-【清羽】Windows10下编译OLLVM-14.x_ollvm 编译优化后-CSDN博客
-cmake，ninja用最新版的就好了
-ollvm版本使用该大佬的
-https://github.com/yangyiyu08/ollvm-proje...
-                        
-                    </div>
-
-                    <div class="home-article-meta-info-container">
-    <div class="home-article-meta-info">
-        <span><i class="fa-solid fa-calendars"></i>&nbsp;
-            <span class="home-article-date" data-date="Sat May 31 2025 16:50:46 GMT+0800">
-                
-                    2025-05-31
-                
-            </span>
-        </span>
-        
-        
-            <span class="home-article-tag">
-                <i class="fa-solid fa-tags"></i>&nbsp;
-                <ul>
-                    
-                        <li>
-                            
-                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
-                        </li>
-                    
-                        <li>
-                            | 
-                            <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
-                        </li>
-                    
-                </ul>
-            </span>
-        
-    </div>
-
-    <a href="/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">阅读全文<span class="seo-reader-text">从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
-</div>
-
-                </div>
-            </li>
-        
     </ul>
 
     <div class="home-paginator px-7 py-5">
@@ -1288,7 +1293,7 @@ https://github.com/yangyiyu08/ollvm-proje...
                 
                 <p class="post-count space-x-0.5">
                     <span>
-                        共撰写了 19 篇文章
+                        共撰写了 20 篇文章
                     </span>
                     
                 </p>
