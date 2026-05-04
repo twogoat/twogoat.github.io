@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="两只羊">
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="https://twogoat.github.io/2026/05/04/frida学习-java-hook原理/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+    
+        
+        <meta name="description" content="从ArtMethod变化观测众所周知，Frida在native层的hook是通过inline hook实现的，就是在函数开头修改字节码，跳转到自己的trampoline函数，这个不难理解，也并非Frida所独有的。&#x2F;但Frida真正强大的，在于其Java层函数Hook的功能。 在此次学习中，我选用Android9 ARM64作为测试环境。 接下来写一段最简单的代码，通过对add_test">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Frida学习-Android9下的Java层函数Hook原理">
+<meta property="og:url" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="twogoatの小站">
+<meta property="og:description" content="从ArtMethod变化观测众所周知，Frida在native层的hook是通过inline hook实现的，就是在函数开头修改字节码，跳转到自己的trampoline函数，这个不难理解，也并非Frida所独有的。&#x2F;但Frida真正强大的，在于其Java层函数Hook的功能。 在此次学习中，我选用Android9 ARM64作为测试环境。 接下来写一段最简单的代码，通过对add_test">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/image-20260504110708287.png">
+<meta property="og:image" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/image-20260504110906008.png">
+<meta property="og:image" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/image-20260504105133983.png">
+<meta property="og:image" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/image-20260504105216480.png">
+<meta property="article:published_time" content="2026-05-04T02:40:59.000Z">
+<meta property="article:modified_time" content="2026-05-04T05:43:40.693Z">
+<meta property="article:author" content="twogoat&#x2F;showmaker">
+<meta property="article:tag" content="Reverse">
+<meta property="article:tag" content="研究">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/image-20260504110708287.png">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/redefine-favicon.svg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/redefine-favicon.svg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/redefine-favicon.svg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            Frida学习-Android9下的Java层函数Hook原理 | twogoat/showmakerの小站
+        
+    </title>
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        
+<link rel="stylesheet" href="/css/build/tailwind.css">
+
+    
+
+    
+<link rel="stylesheet" href="/fonts/GeistMono/geist-mono.css">
+
+    
+<link rel="stylesheet" href="/fonts/Geist/geist.css">
+
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+        
+<script src="/js/build/libs/anime.min.js"></script>
+
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"twogoat.github.io","root":"/","language":"zh-CN"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"5rem","h2":"4rem","h3":"2.8rem","h4":"2.5rem","h5":"2.2rem","h6":"2rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":false,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":true,"open_graph":true,"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/2.png","dark":"/images/2.png"},"title":"twogoat的妙妙屋","subtitle":{"text":["随心所欲地享受每一天\\(￣︶￣*\\))","随时随地，浏览记录O(∩_∩)O","欢迎来到我的博客(｡･∀･)ﾉﾞ","正在努力更新博客(ง •_•)ง"],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":false,"style":"default","links":{"github":null,"instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"9.3.0"}},"version":"2.8.2","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"icon":"fa-solid fa-tags","path":"/tags"},"About Me":{"icon":"fa-regular fa-link","path":"/about"},"Links":{"icon":"fa-regular fa-link","path":"/links"}},"search":{"enable":false,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":null,"show_on_mobile":true,"links":null},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    window.lang_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+
+<body>
+	<div class="progress-bar-container">
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
+
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
+
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
+
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
+
+<div class="preloader">
+    <h2 class="ml13">
+        twogoat/showmakerの小站
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
+
+        // Clear the existing content
+        textWrapper.innerHTML = '';
+
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
+
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
+
+
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
+
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
+
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
+
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                twogoat/showmakerの小站
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/archives"
+                                        >
+                                    <i class="fa-regular fa-archive fa-fw"></i>
+                                    归档
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/tags"
+                                        >
+                                    <i class="fa-solid fa-tags fa-fw"></i>
+                                    标签
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/about"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    ABOUT ME
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/links"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    链接
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/archives"
+                        >
+                            <span>
+                                归档
+                            </span>
+                            
+                                <i class="fa-regular fa-archive fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/tags"
+                        >
+                            <span>
+                                标签
+                            </span>
+                            
+                                <i class="fa-solid fa-tags fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/about"
+                        >
+                            <span>
+                                ABOUT ME
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/links"
+                        >
+                            <span>
+                                链接
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">7</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">0</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">21</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">Frida学习-Android9下的Java层函数Hook原理</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] flex-shrink-0 rounded-medium border border-border-color p-[1px]">
+				<img src="https://avatars.githubusercontent.com/u/173450716?s=400&u=ccae31065054a3a4bf4d8766ed7d532442c26449&v=4">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">两只羊</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv3</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2026-05-04 10:40:59</span>
+        <span class="mobile">2026-05-04 10:40:59</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-05-04 13:43:40</span>
+            <span class="mobile">2026-05-04 13:43:40</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<h2 id="从ArtMethod变化观测"><a href="#从ArtMethod变化观测" class="headerlink" title="从ArtMethod变化观测"></a>从ArtMethod变化观测</h2><p>众所周知，Frida在native层的hook是通过inline hook实现的，就是在函数开头修改字节码，跳转到自己的trampoline函数，这个不难理解，也并非Frida所独有的。&#x2F;但Frida真正强大的，在于其Java层函数Hook的功能。</p>
+<p>在此次学习中，我选用Android9 ARM64作为测试环境。</p>
+<p>接下来写一段最简单的代码，通过对add_test函数分析，来学习Frida的Java Hook原理</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> twogoat.opsu3.artmethod2;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> androidx.appcompat.app.AppCompatActivity;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> android.os.Bundle;</span><br><span class="line"><span class="keyword">import</span> android.util.Log;</span><br><span class="line"><span class="keyword">import</span> android.view.View;</span><br><span class="line"><span class="keyword">import</span> android.widget.Button;</span><br><span class="line"><span class="keyword">import</span> android.widget.TextView;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> twogoat.opsu3.artmethod2.databinding.ActivityMainBinding;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MainActivity</span> <span class="keyword">extends</span> <span class="title class_">AppCompatActivity</span> <span class="keyword">implements</span> <span class="title class_">View</span>.OnClickListener &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Used to load the &#x27;artmethod2&#x27; library on application startup.</span></span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        System.loadLibrary(<span class="string">&quot;artmethod2&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">add_test</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">res</span> <span class="operator">=</span> a + b;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">private</span> ActivityMainBinding binding;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">onCreate</span><span class="params">(Bundle savedInstanceState)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onCreate(savedInstanceState);</span><br><span class="line"></span><br><span class="line">        binding = ActivityMainBinding.inflate(getLayoutInflater());</span><br><span class="line">        setContentView(binding.getRoot());</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Example of a call to a native method</span></span><br><span class="line">        <span class="type">TextView</span> <span class="variable">tv</span> <span class="operator">=</span> binding.sampleText;</span><br><span class="line">        tv.setText(stringFromJNI());</span><br><span class="line"></span><br><span class="line">        <span class="type">Button</span> <span class="variable">button</span> <span class="operator">=</span> findViewById(R.id.button);</span><br><span class="line">        button.setOnClickListener(<span class="built_in">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClick</span><span class="params">(View v)</span> &#123;</span><br><span class="line">        add_test(<span class="number">1</span>, <span class="number">2</span>);</span><br><span class="line">        stringFromJNI();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * A native method that is implemented by the &#x27;artmethod2&#x27; native library,</span></span><br><span class="line"><span class="comment">     * which is packaged with this application.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">native</span> String <span class="title function_">stringFromJNI</span><span class="params">()</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>现代的安卓Art虚拟机中，Java层的一个个函数，本质上就是一个个ArtMethod对象，接下来查看一波源码中的关键结构</p>
+<div class="code-container" data-rel="C++"><figure class="iseeu highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ArtMethod</span> FINAL &#123;</span><br><span class="line">	  <span class="built_in">ArtMethod</span>() : <span class="built_in">access_flags_</span>(<span class="number">0</span>), <span class="built_in">dex_code_item_offset_</span>(<span class="number">0</span>), <span class="built_in">dex_method_index_</span>(<span class="number">0</span>),</span><br><span class="line">      <span class="built_in">method_index_</span>(<span class="number">0</span>), <span class="built_in">hotness_count_</span>(<span class="number">0</span>) &#123; &#125;</span><br><span class="line">       <span class="keyword">protected</span>:</span><br><span class="line">  		GcRoot&lt;mirror::Class&gt; declaring_class_;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        std::atomic&lt;std::<span class="type">uint32_t</span>&gt; access_flags_;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="type">uint32_t</span> dex_code_item_offset_;</span><br><span class="line">        <span class="type">uint32_t</span> dex_method_index_;</span><br><span class="line">        <span class="type">uint16_t</span> method_index_;</span><br><span class="line">        <span class="type">uint16_t</span> hotness_count_;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">struct</span> <span class="title class_">PtrSizedFields</span> &#123;</span><br><span class="line">        <span class="type">void</span>* data_;</span><br><span class="line">        <span class="type">void</span>* entry_point_from_quick_compiled_code_;</span><br><span class="line">      &#125; ptr_sized_fields_;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>接下来简单介绍一下各字段的含义</p>
+<p>重点在access_flags，dex_code_item_offset和ptr_sized_fields_.entry_point_from_quick_compiled_code</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>declaring_class_</code></td>
+<td>该方法所属的类，也就是声明这个方法的 <code>Class</code> 对象。例如 <code>A.foo()</code> 中就是 <code>A.class</code>。</td>
+</tr>
+<tr>
+<td><code>access_flags_</code></td>
+<td>方法访问标志位，如 <code>public</code>、<code>private</code>、<code>static</code>、<code>final</code>、<code>native</code>、<code>abstract</code>、<code>constructor</code> 等。是按位组合的标志。</td>
+</tr>
+<tr>
+<td><code>dex_code_item_offset_</code></td>
+<td>方法在 dex 文件中对应 <code>code_item</code> 的偏移。普通 Java 方法靠它找到字节码；抽象方法、native 方法通常没有有效 code item。</td>
+</tr>
+<tr>
+<td><code>dex_method_index_</code></td>
+<td>该方法在 dex 文件 <code>method_ids</code> 表中的索引，用来定位方法声明信息：类、方法名、参数、返回值。</td>
+</tr>
+<tr>
+<td><code>method_index_</code></td>
+<td>ART 内部方法索引。对虚方法通常是 vtable index；对接口方法可能和 imtable&#x2F;接口分发表相关；对 direct method 则是类方法表中的索引。</td>
+</tr>
+<tr>
+<td><code>hotness_count_</code></td>
+<td>热度计数。ART 用它统计方法执行频率，辅助 JIT 编译、热点优化等。</td>
+</tr>
+<tr>
+<td><code>ptr_sized_fields_.data_</code></td>
+<td>指针大小相关字段之一，含义随方法类型变化。对 native 方法常保存 JNI 函数地址或 native 相关数据；对普通方法可能和解释执行&#x2F;Profiling&#x2F;Runtime 数据有关。</td>
+</tr>
+<tr>
+<td><code>ptr_sized_fields_.entry_point_from_quick_compiled_code_</code></td>
+<td>quick compiled code 的入口地址。方法被调用时，如果有已编译机器码，就跳到这里执行；否则可能指向解释器桥、JNI bridge、resolution trampoline 等。</td>
+</tr>
+</tbody></table>
+<p>接下来仿照上面的结构体，尝试读出真实运行时，add_test函数的个字段含义</p>
+<div class="code-container" data-rel="C++"><figure class="iseeu highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">DumpArtMethod</span><span class="params">(jmethodID method_id)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (method_id == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;add_test jmethodID is null&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> <span class="type">void</span> *art_method = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">const</span> <span class="type">void</span> *&gt;(method_id);</span><br><span class="line">    <span class="type">const</span> <span class="type">size_t</span> ptr_sized_fields_offset = <span class="built_in">PtrSizedFieldsOffset</span>();</span><br><span class="line">    <span class="type">const</span> <span class="type">size_t</span> data_offset = ptr_sized_fields_offset;</span><br><span class="line">    <span class="type">const</span> <span class="type">size_t</span> quick_code_offset = ptr_sized_fields_offset + <span class="built_in">sizeof</span>(<span class="type">void</span> *);</span><br><span class="line">    <span class="type">const</span> <span class="type">size_t</span> art_method_size = ptr_sized_fields_offset + <span class="number">2</span> * <span class="built_in">sizeof</span>(<span class="type">void</span> *);</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> <span class="type">uint32_t</span> declaring_class = <span class="built_in">ReadField</span>&lt;<span class="type">uint32_t</span>&gt;(art_method, kDeclaringClassOffset);</span><br><span class="line">    <span class="type">const</span> <span class="type">uint32_t</span> access_flags = <span class="built_in">ReadField</span>&lt;<span class="type">uint32_t</span>&gt;(art_method, kAccessFlagsOffset);</span><br><span class="line">    <span class="type">const</span> <span class="type">uint32_t</span> dex_code_item_offset = <span class="built_in">ReadField</span>&lt;<span class="type">uint32_t</span>&gt;(</span><br><span class="line">            art_method, kDexCodeItemOffsetOffset);</span><br><span class="line">    <span class="type">const</span> <span class="type">uint32_t</span> dex_method_index = <span class="built_in">ReadField</span>&lt;<span class="type">uint32_t</span>&gt;(</span><br><span class="line">            art_method, kDexMethodIndexOffset);</span><br><span class="line">    <span class="type">const</span> <span class="type">uint16_t</span> method_index = <span class="built_in">ReadField</span>&lt;<span class="type">uint16_t</span>&gt;(art_method, kMethodIndexOffset);</span><br><span class="line">    <span class="type">const</span> <span class="type">uint16_t</span> hotness_count = <span class="built_in">ReadField</span>&lt;<span class="type">uint16_t</span>&gt;(art_method, kHotnessCountOffset);</span><br><span class="line">    <span class="type">const</span> <span class="type">uintptr_t</span> data = <span class="built_in">ReadPtrSizedField</span>(art_method, data_offset);</span><br><span class="line">    <span class="type">const</span> <span class="type">uintptr_t</span> quick_code = <span class="built_in">ReadPtrSizedField</span>(art_method, quick_code_offset);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;add_test ArtMethod=%p pointer_size=%zu art_method_size=0x%zx&quot;</span>,</span><br><span class="line">         art_method, <span class="built_in">sizeof</span>(<span class="type">void</span> *), art_method_size);</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  offsets: declaring_class_=0x%zx access_flags_=0x%zx&quot;</span></span><br><span class="line">         <span class="string">&quot; dex_code_item_offset_=0x%zx dex_method_index_=0x%zx&quot;</span></span><br><span class="line">         <span class="string">&quot; method_index_=0x%zx hotness_count_=0x%zx&quot;</span>,</span><br><span class="line">         kDeclaringClassOffset, kAccessFlagsOffset,</span><br><span class="line">         kDexCodeItemOffsetOffset, kDexMethodIndexOffset,</span><br><span class="line">         kMethodIndexOffset, kHotnessCountOffset);</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  offsets: ptr_sized_fields_=0x%zx data_=0x%zx quick_code=0x%zx&quot;</span>,</span><br><span class="line">         ptr_sized_fields_offset, data_offset, quick_code_offset);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  declaring_class_=0x%08&quot;</span> PRIx32, declaring_class);</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  access_flags_=0x%08&quot;</span> PRIx32</span><br><span class="line">         <span class="string">&quot; java_flags=0x%04&quot;</span> PRIx32</span><br><span class="line">         <span class="string">&quot; runtime_flags=0x%08&quot;</span> PRIx32</span><br><span class="line">         <span class="string">&quot; hidden_api=%s&quot;</span>,</span><br><span class="line">         access_flags, access_flags &amp; kAccJavaFlagsMask,</span><br><span class="line">         access_flags &amp; ~kAccJavaFlagsMask, <span class="built_in">HiddenApiListName</span>(access_flags));</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  access_flags_: %s&quot;</span>, <span class="built_in">AccessFlagNames</span>(access_flags).<span class="built_in">c_str</span>());</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  dex_code_item_offset_=0x%08&quot;</span> PRIx32 <span class="string">&quot; (%&quot;</span> PRIu32 <span class="string">&quot;)&quot;</span>,</span><br><span class="line">         dex_code_item_offset, dex_code_item_offset);</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  dex_method_index_=0x%08&quot;</span> PRIx32 <span class="string">&quot; (%&quot;</span> PRIu32 <span class="string">&quot;)&quot;</span>,</span><br><span class="line">         dex_method_index, dex_method_index);</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  method_index_=0x%04x (%u)&quot;</span>,</span><br><span class="line">         <span class="built_in">static_cast</span>&lt;<span class="type">unsigned</span>&gt;(method_index), <span class="built_in">static_cast</span>&lt;<span class="type">unsigned</span>&gt;(method_index));</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  hotness_count_=0x%04x (%u)&quot;</span>,</span><br><span class="line">         <span class="built_in">static_cast</span>&lt;<span class="type">unsigned</span>&gt;(hotness_count), <span class="built_in">static_cast</span>&lt;<span class="type">unsigned</span>&gt;(hotness_count));</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  ptr_sized_fields_.data_=%s&quot;</span>,</span><br><span class="line">         <span class="built_in">DescribeAddress</span>(<span class="built_in">reinterpret_cast</span>&lt;<span class="type">const</span> <span class="type">void</span> *&gt;(data)).<span class="built_in">c_str</span>());</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;  ptr_sized_fields_.entry_point_from_quick_compiled_code_=%s&quot;</span>,</span><br><span class="line">         <span class="built_in">DescribeAddress</span>(<span class="built_in">reinterpret_cast</span>&lt;<span class="type">const</span> <span class="type">void</span> *&gt;(quick_code)).<span class="built_in">c_str</span>());</span><br><span class="line"></span><br><span class="line">    <span class="built_in">DumpBytes</span>(<span class="string">&quot;  ArtMethod raw bytes&quot;</span>, art_method, art_method_size);</span><br><span class="line">    <span class="built_in">DumpDexCodeItem</span>(dex_method_index, dex_code_item_offset);</span><br><span class="line">    <span class="built_in">DumpBytes</span>(<span class="string">&quot;  quick_code bytes&quot;</span>, <span class="built_in">reinterpret_cast</span>&lt;<span class="type">const</span> <span class="type">void</span> *&gt;(quick_code), <span class="number">32</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>运行程序后，ArtMethod结构体解析如下</p>
+<div class="code-container" data-rel="C++"><figure class="iseeu highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">, add_test ArtMethod=<span class="number">0x787e628400</span> pointer_size=<span class="number">8</span> art_method_size=<span class="number">0x28</span></span><br><span class="line">,   offsets: declaring_class_=<span class="number">0x0</span> access_flags_=<span class="number">0x4</span> dex_code_item_offset_=<span class="number">0x8</span> dex_method_index_=<span class="number">0xc</span> method_index_=<span class="number">0x10</span> hotness_count_=<span class="number">0x12</span></span><br><span class="line">,   offsets: ptr_sized_fields_=<span class="number">0x18</span> data_=<span class="number">0x18</span> quick_code=<span class="number">0x20</span></span><br><span class="line">,   declaring_class_=<span class="number">0x170c7598</span></span><br><span class="line">,   access_flags_=<span class="number">0x08080001</span> java_flags=<span class="number">0x0001</span> runtime_flags=<span class="number">0x08080000</span> hidden_api=whitelist</span><br><span class="line">,   access_flags_: kAccPublic|kAccSkipAccessChecks/kAccFastNative|kAccSingleImplementation</span><br><span class="line">,   dex_code_item_offset_=<span class="number">0x000002b4</span> (<span class="number">692</span>)</span><br><span class="line">,   dex_method_index_=<span class="number">0x00000007</span> (<span class="number">7</span>)</span><br><span class="line">,   method_index_=<span class="number">0x023e</span> (<span class="number">574</span>)</span><br><span class="line">,   hotness_count_=<span class="number">0x0000</span> (<span class="number">0</span>)</span><br><span class="line">,   ptr_sized_fields_.data_=<span class="number">0x0</span></span><br><span class="line">,   ptr_sized_fields_.entry_point_from_quick_compiled_code_=<span class="number">0x7884116aa0</span> /system/lib64/libart.so<span class="number">+0x536aa0</span></span><br><span class="line">,   ArtMethod raw bytes address=<span class="number">0x787e628400</span> size=<span class="number">0x28</span></span><br><span class="line">,     <span class="number">+0x0000</span>: <span class="number">98</span> <span class="number">75</span> <span class="number">0</span>c <span class="number">17</span> <span class="number">01</span> <span class="number">00</span> <span class="number">0</span>8 <span class="number">0</span>8 b4 <span class="number">02</span> <span class="number">00</span> <span class="number">00</span> <span class="number">07</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> </span><br><span class="line">,     <span class="number">+0x0010</span>: <span class="number">3</span>e <span class="number">02</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> </span><br><span class="line">,     <span class="number">+0x0020</span>: a0 <span class="number">6</span>a <span class="number">11</span> <span class="number">84</span> <span class="number">78</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> </span><br><span class="line">,   quick_code bytes address=<span class="number">0x7884116aa0</span> size=<span class="number">0x20</span></span><br><span class="line">,     <span class="number">+0x0000</span>: <span class="number">90</span> <span class="number">06</span> <span class="number">00</span> <span class="number">90</span> <span class="number">10</span> b6 <span class="number">46</span> f9 <span class="number">10</span> <span class="number">02</span> <span class="number">40</span> f9 <span class="number">10</span> <span class="number">0</span>a <span class="number">40</span> f9 </span><br><span class="line">,     <span class="number">+0x0010</span>: ff <span class="number">83</span> <span class="number">03</span> d1 e0 <span class="number">07</span> <span class="number">01</span> <span class="number">6</span>d e2 <span class="number">0</span>f <span class="number">02</span> <span class="number">6</span>d e4 <span class="number">17</span> <span class="number">03</span> <span class="number">6</span>d </span><br></pre></td></tr></table></figure></div>
+
+<p>可以看到在一开始，access_flags属性为kAccPublic | kAccSkipAccessChecks &#x2F; kAccFastNative | kAccSingleImplementation</p>
+<p>各标志位含义如下</p>
+<table>
+<thead>
+<tr>
+<th>标志</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>kAccPublic</code></td>
+<td>方法是 <code>public</code>，可公开访问。</td>
+</tr>
+<tr>
+<td><code>kAccSkipAccessChecks</code></td>
+<td>ART 运行时调用该方法时跳过访问权限检查。常见于已验证、可信或运行时生成&#x2F;特殊处理的方法。</td>
+</tr>
+<tr>
+<td><code>kAccFastNative</code></td>
+<td>表示这是一个 fast JNI native 方法。JNI 调用开销更低，但 GC&#x2F;线程状态处理限制更多。</td>
+</tr>
+<tr>
+<td><code>kAccSingleImplementation</code></td>
+<td>表示该方法在当前类层次&#x2F;接口分派中只有一个实现，ART 可用它做优化，比如内联、去虚化调用。</td>
+</tr>
+</tbody></table>
+<p>虽然还看不太出什么，但可以看到entry_point_from_quick_compiled_code_执行的是&#x2F;system&#x2F;lib64&#x2F;libart.so+0x536aa0</p>
+<p>但在实际动态过程中，发现其实其应该是偏移0x55DAA0的地方，不过问题不大，我们继续来分析</p>
+<p>在&#x2F;system&#x2F;lib64&#x2F;libart.so+0x55DAA0，函数名为art_quick_to_interpreter_bridge ，它的核心功能为</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1. 接收 quick 调用约定传来的参数</span><br><span class="line">2. 构造解释器需要的 ShadowFrame</span><br><span class="line">3. 找到 dex code item</span><br><span class="line">4. 调用 ART interpreter</span><br><span class="line">5. 把解释器执行结果按 quick 调用约定返回</span><br></pre></td></tr></table></figure></div>
+
+<p>它本质上是一个调用约定转换器</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/image-20260504110708287.png"
+                      alt="image-20260504110708287"
+                ></p>
+<p>这表示add_test方法还没被编译为可用的字节码，需要跳转到解释器，从dex文件中找出方法定义的字节码</p>
+<p>在内层的artQuickToInterpreterBridge中，也可以看到包含”dex”名的函数调用</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/image-20260504110906008.png"
+                      alt="image-20260504110906008"
+                ></p>
+<p>接下来编写一个最简单的脚本去hook add_test</p>
+<div class="code-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">hook_add</span>(<span class="params"></span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="title class_">Java</span>.<span class="title function_">perform</span>(<span class="keyword">function</span>(<span class="params"></span>)&#123;</span><br><span class="line">        <span class="keyword">var</span> <span class="title class_">MainActivity</span> = <span class="title class_">Java</span>.<span class="title function_">use</span>(<span class="string">&quot;twogoat.opsu3.artmethod2.MainActivity&quot;</span>)</span><br><span class="line">        <span class="keyword">var</span> add_test = <span class="title class_">MainActivity</span>.<span class="property">add_test</span>.<span class="title function_">overload</span>(<span class="string">&#x27;int&#x27;</span>, <span class="string">&#x27;int&#x27;</span>)</span><br><span class="line">        add_test.<span class="property">implementation</span> = <span class="keyword">function</span>(<span class="params">a, b</span>)&#123;</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`add_test =&gt; <span class="subst">$&#123;a&#125;</span> <span class="subst">$&#123;b&#125;</span>`</span> )</span><br><span class="line">            <span class="comment">//dumpFridaMangler(add_test)</span></span><br><span class="line">            <span class="keyword">var</span> result = add_test.<span class="title function_">call</span>(<span class="variable language_">this</span>, a, b)</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`add_test res =&gt; <span class="subst">$&#123;result&#125;</span>`</span>)</span><br><span class="line">            <span class="keyword">return</span> result</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;[Frida] add_test hook installed&#x27;</span>)</span><br><span class="line">        <span class="comment">//dumpFridaMangler(add_test)</span></span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>在hook成功后再去查看add_test的ArtMethod结构，发现果然被修改了</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">I  add_test ArtMethod=<span class="number">0x78690c7400</span> pointer_size=<span class="number">8</span> art_method_size=<span class="number">0x28</span></span><br><span class="line">I    offsets: declaring_class_=<span class="number">0x0</span> access_flags_=<span class="number">0x4</span> dex_code_item_offset_=<span class="number">0x8</span> dex_method_index_=<span class="number">0xc</span> method_index_=<span class="number">0x10</span> hotness_count_=<span class="number">0x12</span></span><br><span class="line">I    offsets: ptr_sized_fields_=<span class="number">0x18</span> data_=<span class="number">0x18</span> quick_code=<span class="number">0x20</span></span><br><span class="line">I    declaring_class_=<span class="number">0x16f46158</span></span><br><span class="line">I    access_flags_=<span class="number">0x02000001</span> java_flags=<span class="number">0x0001</span> runtime_flags=<span class="number">0x02000000</span> hidden_api=whitelist</span><br><span class="line">I    access_flags_: kAccPublic|kAccCompileDontBother</span><br><span class="line">I    dex_code_item_offset_=<span class="number">0x000002b4</span> (<span class="number">692</span>)</span><br><span class="line">I    dex_method_index_=<span class="number">0x00000007</span> (<span class="number">7</span>)</span><br><span class="line">I    method_index_=<span class="number">0x023e</span> (<span class="number">574</span>)</span><br><span class="line">I    hotness_count_=<span class="number">0x0000</span> (<span class="number">0</span>)</span><br><span class="line">I    ptr_sized_fields_.data_=<span class="number">0x0</span></span><br><span class="line">I    ptr_sized_fields_.entry_point_from_quick_compiled_code_=<span class="number">0x7884116aa0</span> /system/lib64/libart.so+<span class="number">0x536aa0</span></span><br><span class="line">I    ArtMethod raw bytes address=<span class="number">0x78690c7400</span> size=<span class="number">0x28</span></span><br><span class="line">I      +<span class="number">0x0000</span>: <span class="number">58</span> <span class="number">61</span> f4 <span class="number">16</span> <span class="number">01</span> <span class="number">00</span> <span class="number">00</span> <span class="number">02</span> b4 <span class="number">02</span> <span class="number">00</span> <span class="number">00</span> <span class="number">07</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> </span><br><span class="line">I      +<span class="number">0x0010</span>: <span class="number">3</span>e <span class="number">02</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> </span><br><span class="line">I      +<span class="number">0x0020</span>: a0 <span class="number">6</span>a <span class="number">11</span> <span class="number">84</span> <span class="number">78</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> </span><br><span class="line">I    quick_code bytes address=<span class="number">0x7884116aa0</span> size=<span class="number">0x20</span></span><br><span class="line">I      +<span class="number">0x0000</span>: <span class="number">50</span> <span class="number">00</span> <span class="number">00</span> <span class="number">58</span> <span class="number">00</span> <span class="number">02</span> <span class="number">1f</span> d6 <span class="number">00</span> <span class="number">5f</span> db <span class="number">04</span> <span class="number">79</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> </span><br><span class="line">I      +<span class="number">0x0010</span>: ff <span class="number">83</span> <span class="number">03</span> d1 e0 <span class="number">07</span> <span class="number">01</span> <span class="number">6</span>d e2 <span class="number">0f</span> <span class="number">02</span> <span class="number">6</span>d e4 <span class="number">17</span> <span class="number">03</span> <span class="number">6</span>d </span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>access_flags_现在除了kAccPublic只剩下了kAccCompileDontBother，他的含义为不要再尝试编译这个方法</p>
+<p>但问题又来了entry_point_from_quick_compiled_code_仍然指向art_quick_to_interpreter_bridge（0x7884116AA0），似乎没有发生任何变化。不过可以看到的是，art_quick_to_interpreter_bridge的函数头明显发生了变化，接下来尝试动调可以看到，进行了一个inline hook的操作，这里跳转到的sub_7904db5f00应该就是Frida的自己的trampoline了</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/image-20260504105133983.png"
+                      alt="image-20260504105133983"
+                ></p>
+<p>可以看到在调用sub_79058FB3B0后，根据结果是走它分配的对象函数或者走原来的art_quick_to_interpreter_bridge逻辑</p>
+<p>这里sub_79058FB3B0没太看懂，有点复杂。</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Java-Hook%E5%8E%9F%E7%90%86/image-20260504105216480.png"
+                      alt="image-20260504105216480"
+                ></p>
+<p>在之前的理论学习中，我了解到的是Frida会把art_quick_to_interpreter_bridge改为art_quick_generic_jni_trampoline，并把entry_point_from_jni_改为对应的implementation的hook方法。</p>
+<p>但在android9下看起来并非如此，首先ArtMethod中既没有entry_point_from_jni_这个字段，其次在art_quick_generic_jni_trampoline下断点后，最终也并没有断住。</p>
+<p>那么接下来需要结合实际的源码去分析一下了</p>
+<h2 id="Frida源码分析"><a href="#Frida源码分析" class="headerlink" title="Frida源码分析"></a>Frida源码分析</h2><p>查看frida-java-bridge-6.2.7&#x2F;lib&#x2F;android.js后，可以确认0x7904db5f00为writeArtQuickCodeReplacementTrampolineArm64，而0x79058FB3B0为的find_replacement_method_from_quick_code。</p>
+<p>先来看看writeArtQuickCodeReplacementTrampolineArm64，它在trampoline中通过写入纯机器码的形式，实现了保存寄存器等操作，并调用了findReplacementFromQuickCode</p>
+<div class="code-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">writeArtQuickCodeReplacementTrampolineArm64</span> (<span class="params">trampoline, target, redirectSize, &#123; availableScratchRegs &#125;, vm</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> artMethodOffsets = <span class="title function_">getArtMethodSpec</span>(vm).<span class="property">offset</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> offset;</span><br><span class="line">  <span class="title class_">Memory</span>.<span class="title function_">patchCode</span>(trampoline, <span class="number">256</span>, <span class="function"><span class="params">code</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> writer = <span class="keyword">new</span> <span class="title class_">Arm64Writer</span>(code, &#123; <span class="attr">pc</span>: trampoline &#125;);</span><br><span class="line">    <span class="keyword">const</span> relocator = <span class="keyword">new</span> <span class="title class_">Arm64Relocator</span>(target, writer);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Save FPRs.</span></span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;d0&#x27;</span>, <span class="string">&#x27;d1&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;d2&#x27;</span>, <span class="string">&#x27;d3&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;d4&#x27;</span>, <span class="string">&#x27;d5&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;d6&#x27;</span>, <span class="string">&#x27;d7&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Save core args, callee-saves &amp; LR.</span></span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;x1&#x27;</span>, <span class="string">&#x27;x2&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;x3&#x27;</span>, <span class="string">&#x27;x4&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;x5&#x27;</span>, <span class="string">&#x27;x6&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;x7&#x27;</span>, <span class="string">&#x27;x20&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;x21&#x27;</span>, <span class="string">&#x27;x22&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;x23&#x27;</span>, <span class="string">&#x27;x24&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;x25&#x27;</span>, <span class="string">&#x27;x26&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;x27&#x27;</span>, <span class="string">&#x27;x28&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPushRegReg</span>(<span class="string">&#x27;x29&#x27;</span>, <span class="string">&#x27;lr&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Save ArtMethod* + alignment padding.</span></span><br><span class="line">    writer.<span class="title function_">putSubRegRegImm</span>(<span class="string">&#x27;sp&#x27;</span>, <span class="string">&#x27;sp&#x27;</span>, <span class="number">16</span>);</span><br><span class="line">    writer.<span class="title function_">putStrRegRegOffset</span>(<span class="string">&#x27;x0&#x27;</span>, <span class="string">&#x27;sp&#x27;</span>, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    writer.<span class="title function_">putCallAddressWithArguments</span>(artController.<span class="property">replacedMethods</span>.<span class="property">findReplacementFromQuickCode</span>, [<span class="string">&#x27;x0&#x27;</span>, <span class="string">&#x27;x19&#x27;</span>]);</span><br><span class="line"></span><br><span class="line">    writer.<span class="title function_">putCmpRegReg</span>(<span class="string">&#x27;x0&#x27;</span>, <span class="string">&#x27;xzr&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putBCondLabel</span>(<span class="string">&#x27;eq&#x27;</span>, <span class="string">&#x27;restore_registers&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Set value of x0 in the current frame.</span></span><br><span class="line">    writer.<span class="title function_">putStrRegRegOffset</span>(<span class="string">&#x27;x0&#x27;</span>, <span class="string">&#x27;sp&#x27;</span>, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    writer.<span class="title function_">putLabel</span>(<span class="string">&#x27;restore_registers&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Restore ArtMethod*</span></span><br><span class="line">    writer.<span class="title function_">putLdrRegRegOffset</span>(<span class="string">&#x27;x0&#x27;</span>, <span class="string">&#x27;sp&#x27;</span>, <span class="number">0</span>);</span><br><span class="line">    writer.<span class="title function_">putAddRegRegImm</span>(<span class="string">&#x27;sp&#x27;</span>, <span class="string">&#x27;sp&#x27;</span>, <span class="number">16</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Restore core args, callee-saves &amp; LR.</span></span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;x29&#x27;</span>, <span class="string">&#x27;lr&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;x27&#x27;</span>, <span class="string">&#x27;x28&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;x25&#x27;</span>, <span class="string">&#x27;x26&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;x23&#x27;</span>, <span class="string">&#x27;x24&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;x21&#x27;</span>, <span class="string">&#x27;x22&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;x7&#x27;</span>, <span class="string">&#x27;x20&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;x5&#x27;</span>, <span class="string">&#x27;x6&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;x3&#x27;</span>, <span class="string">&#x27;x4&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;x1&#x27;</span>, <span class="string">&#x27;x2&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Restore FPRs.</span></span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;d6&#x27;</span>, <span class="string">&#x27;d7&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;d4&#x27;</span>, <span class="string">&#x27;d5&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;d2&#x27;</span>, <span class="string">&#x27;d3&#x27;</span>);</span><br><span class="line">    writer.<span class="title function_">putPopRegReg</span>(<span class="string">&#x27;d0&#x27;</span>, <span class="string">&#x27;d1&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    writer.<span class="title function_">putBCondLabel</span>(<span class="string">&#x27;ne&#x27;</span>, <span class="string">&#x27;invoke_replacement&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      offset = relocator.<span class="title function_">readOne</span>();</span><br><span class="line">    &#125; <span class="keyword">while</span> (offset &lt; redirectSize &amp;&amp; !relocator.<span class="property">eoi</span>);</span><br><span class="line"></span><br><span class="line">    relocator.<span class="title function_">writeAll</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!relocator.<span class="property">eoi</span>) &#123;</span><br><span class="line">      <span class="keyword">const</span> scratchReg = <span class="title class_">Array</span>.<span class="title function_">from</span>(availableScratchRegs)[<span class="number">0</span>];</span><br><span class="line">      writer.<span class="title function_">putLdrRegAddress</span>(scratchReg, target.<span class="title function_">add</span>(offset));</span><br><span class="line">      writer.<span class="title function_">putBrReg</span>(scratchReg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    writer.<span class="title function_">putLabel</span>(<span class="string">&#x27;invoke_replacement&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    writer.<span class="title function_">putLdrRegRegOffset</span>(<span class="string">&#x27;x16&#x27;</span>, <span class="string">&#x27;x0&#x27;</span>, artMethodOffsets.<span class="property">quickCode</span>);</span><br><span class="line">    writer.<span class="title function_">putBrReg</span>(<span class="string">&#x27;x16&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    writer.<span class="title function_">flush</span>();</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> offset;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>大概表示为它先保存参数寄存器，调用一个 Frida 查表函数，返回非零就把 x0 改成 replacement ArtMethod，再跳 replacement-&gt;quick_code；返回零才继续走原始 art_quick_to_interpreter_bridge。</p>
+<div class="code-container" data-rel="Python"><figure class="iseeu highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">保存 x1-x7 / d0-d7 / x20-x30</span><br><span class="line">保存 x0，也就是 ArtMethod* A</span><br><span class="line">mov x1, x19          ; x19 是 art::Thread*</span><br><span class="line">bl  <span class="number">0x79058FB3B0</span>     ; findReplacementFromQuickCode(A, thread)</span><br><span class="line">cmp x0, xzr</span><br><span class="line"></span><br><span class="line">如果 x0 == <span class="number">0</span>:</span><br><span class="line">    恢复 A</span><br><span class="line">    执行被搬走的 art_quick_to_interpreter_bridge 原始指令</span><br><span class="line">    跳回 <span class="number">0x7884116AB0</span></span><br><span class="line"></span><br><span class="line">如果 x0 != <span class="number">0</span>:</span><br><span class="line">    x0 = B</span><br><span class="line">    ldr x16, [x0, <span class="comment">#0x20]</span></span><br><span class="line">    br x16</span><br></pre></td></tr></table></figure></div>
+
+<p>接下来再看看replace的实现</p>
+<div class="code-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">replace</span> (impl, isInstanceMethod, argTypes, vm, api) &#123;</span><br><span class="line">  <span class="keyword">const</span> &#123; kAccCompileDontBother, artNterpEntryPoint &#125; = api;</span><br><span class="line"></span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">originalMethod</span> = <span class="title function_">fetchArtMethod</span>(<span class="variable language_">this</span>.<span class="property">methodId</span>, vm);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> originalFlags = <span class="variable language_">this</span>.<span class="property">originalMethod</span>.<span class="property">accessFlags</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ((originalFlags &amp; kAccXposedHookedMethod) !== <span class="number">0</span> &amp;&amp; <span class="title function_">xposedIsSupported</span>()) &#123;</span><br><span class="line">    <span class="keyword">const</span> hookInfo = <span class="variable language_">this</span>.<span class="property">originalMethod</span>.<span class="property">jniCode</span>;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">hookedMethodId</span> = hookInfo.<span class="title function_">add</span>(<span class="number">2</span> * pointerSize).<span class="title function_">readPointer</span>();</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">originalMethod</span> = <span class="title function_">fetchArtMethod</span>(<span class="variable language_">this</span>.<span class="property">hookedMethodId</span>, vm);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> &#123; hookedMethodId &#125; = <span class="variable language_">this</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> replacementMethodId = <span class="title function_">cloneArtMethod</span>(hookedMethodId, vm);</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">replacementMethodId</span> = replacementMethodId;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">patchArtMethod</span>(replacementMethodId, &#123;</span><br><span class="line">    <span class="attr">jniCode</span>: impl,</span><br><span class="line">    <span class="attr">accessFlags</span>: ((originalFlags &amp; ~(kAccCriticalNative | kAccFastNative | kAccNterpEntryPointFastPathFlag)) | kAccNative | kAccCompileDontBother) &gt;&gt;&gt; <span class="number">0</span>,</span><br><span class="line">    <span class="attr">quickCode</span>: api.<span class="property">artClassLinker</span>.<span class="property">quickGenericJniTrampoline</span>,</span><br><span class="line">    <span class="attr">interpreterCode</span>: api.<span class="property">artInterpreterToCompiledCodeBridge</span></span><br><span class="line">  &#125;, vm);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Remove kAccFastInterpreterToInterpreterInvoke and kAccSkipAccessChecks to disable use_fast_path</span></span><br><span class="line">  <span class="comment">// in interpreter_common.h</span></span><br><span class="line">  <span class="keyword">let</span> hookedMethodRemovedFlags = kAccFastInterpreterToInterpreterInvoke | kAccSingleImplementation | kAccNterpEntryPointFastPathFlag;</span><br><span class="line">  <span class="keyword">if</span> ((originalFlags &amp; kAccNative) === <span class="number">0</span>) &#123;</span><br><span class="line">    hookedMethodRemovedFlags |= kAccSkipAccessChecks;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">patchArtMethod</span>(hookedMethodId, &#123;</span><br><span class="line">    <span class="attr">accessFlags</span>: ((originalFlags &amp; ~(hookedMethodRemovedFlags)) | kAccCompileDontBother) &gt;&gt;&gt; <span class="number">0</span></span><br><span class="line">  &#125;, vm);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> quickCode = <span class="variable language_">this</span>.<span class="property">originalMethod</span>.<span class="property">quickCode</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Replace Nterp quick entrypoints with art_quick_to_interpreter_bridge to force stepping out</span></span><br><span class="line">  <span class="comment">// of ART&#x27;s next-generation interpreter and use the quick stub instead.</span></span><br><span class="line">  <span class="keyword">if</span> (artNterpEntryPoint !== <span class="literal">undefined</span> &amp;&amp; quickCode.<span class="title function_">equals</span>(artNterpEntryPoint)) &#123;</span><br><span class="line">    <span class="title function_">patchArtMethod</span>(hookedMethodId, &#123;</span><br><span class="line">      <span class="attr">quickCode</span>: api.<span class="property">artQuickToInterpreterBridge</span></span><br><span class="line">    &#125;, vm);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!<span class="title function_">isArtQuickEntrypoint</span>(quickCode)) &#123;</span><br><span class="line">    <span class="keyword">const</span> interceptor = <span class="keyword">new</span> <span class="title class_">ArtQuickCodeInterceptor</span>(quickCode);</span><br><span class="line">    interceptor.<span class="title function_">activate</span>(vm);</span><br><span class="line"></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">interceptor</span> = interceptor;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  artController.<span class="property">replacedMethods</span>.<span class="title function_">set</span>(hookedMethodId, replacementMethodId);</span><br><span class="line"></span><br><span class="line">  <span class="title function_">notifyArtMethodHooked</span>(hookedMethodId, vm);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>重点关注这一行，我们之前的猜想其实是正确的，在android9下jniCode其实就对应<code>ptr_sized_fields_.data_</code>，而quickCode对应entry_point_from_quick_compiled_code_</p>
+<div class="code-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> replacementMethodId = <span class="title function_">cloneArtMethod</span>(hookedMethodId, vm);</span><br><span class="line"><span class="variable language_">this</span>.<span class="property">replacementMethodId</span> = replacementMethodId;</span><br><span class="line"></span><br><span class="line"><span class="title function_">patchArtMethod</span>(replacementMethodId, &#123;</span><br><span class="line">  <span class="attr">jniCode</span>: impl,</span><br><span class="line">  <span class="attr">accessFlags</span>: ((originalFlags &amp; ~(kAccCriticalNative | kAccFastNative | kAccNterpEntryPointFastPathFlag)) | kAccNative | kAccCompileDontBother) &gt;&gt;&gt; <span class="number">0</span>,</span><br><span class="line">  <span class="attr">quickCode</span>: api.<span class="property">artClassLinker</span>.<span class="property">quickGenericJniTrampoline</span>,</span><br><span class="line">  <span class="attr">interpreterCode</span>: api.<span class="property">artInterpreterToCompiledCodeBridge</span></span><br><span class="line">&#125;, vm);</span><br></pre></td></tr></table></figure></div>
+
+<p>至于interpreterCode，则会在patchArtMethod中由getArtMethodSpec去具体探测当前版本是否存在这个偏移字段，最后给出真正需要修改的字段</p>
+<div class="code-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">patchArtMethod</span> (<span class="params">methodId, patches, vm</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> artMethodSpec = <span class="title function_">getArtMethodSpec</span>(vm);</span><br><span class="line">  <span class="keyword">const</span> artMethodOffset = artMethodSpec.<span class="property">offset</span>;</span><br><span class="line">  <span class="title class_">Object</span>.<span class="title function_">keys</span>(patches).<span class="title function_">forEach</span>(<span class="function"><span class="params">name</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> offset = artMethodOffset[name];</span><br><span class="line">    <span class="keyword">if</span> (offset === <span class="literal">undefined</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> address = methodId.<span class="title function_">add</span>(offset);</span><br><span class="line">    <span class="keyword">const</span> write = (name === <span class="string">&#x27;accessFlags&#x27;</span>) ? writeU32 : writePointer;</span><br><span class="line">    write.<span class="title function_">call</span>(address, patches[name]);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>也就是说，add_test的ArtMethod对象记为A。真正的执行点是Frida clone了一份A，记为B，然后把B的entry_point_from_quick_compiled_code_字段修改为quickGenericJniTrampoline，而data修改为真正的implentation函数</p>
+<p>关键的流程总结如下</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">A.quick_code = art_quick_to_interpreter_bridge</span><br><span class="line">art_quick_to_interpreter_bridge 被 Frida inline patch</span><br><span class="line">patched bridge -&gt; Frida dispatcher</span><br><span class="line">dispatcher 查 A -&gt; B 映射</span><br><span class="line">命中则 x0 = B，然后 br [B + quickCodeOffset]</span><br><span class="line">B.quickCode = ClassLinker.quickGenericJniTrampoline</span><br><span class="line">B.data_ = Frida NativeCallback implementation</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>通过对Frida的implementiaion对象解析，我们能进一步确认结论，0x79058FB3B0也就是find_replacement_method_from_quick_code返回的ArtMethod对象，才是真正的执行对象。</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">I  [Mapping] Frida replacement mapping observed from JS:</span><br><span class="line">I  [Mapping] methods[<span class="number">0x78690c7400</span>] = <span class="number">0x787adbb570</span></span><br><span class="line">I  [Mapping] original(A) ArtMethod=<span class="number">0x78690c7400</span> declaring_class_=<span class="number">0x15ff1c38</span> access_flags_=<span class="number">0x02000001</span> dex_code_item_offset_=<span class="number">0x000002b4</span> dex_method_index_=<span class="number">7</span> method_index_=<span class="number">574</span> hotness_count_=<span class="number">0</span> data_=<span class="number">0x0</span> quick_code=<span class="number">0x7884116aa0</span></span><br><span class="line">I  [Mapping] original(A) data_: <span class="number">0x0</span></span><br><span class="line">I  [Mapping] original(A) quick_code: <span class="number">0x7884116aa0</span> /system/lib64/libart.so+<span class="number">0x536aa0</span></span><br><span class="line"></span><br><span class="line">I  [Mapping] replacement(B) ArtMethod=<span class="number">0x787adbb570</span> declaring_class_=<span class="number">0x15ff1c38</span> access_flags_=<span class="number">0x0a000101</span> dex_code_item_offset_=<span class="number">0x000002b4</span> dex_method_index_=<span class="number">7</span> method_index_=<span class="number">574</span> hotness_count_=<span class="number">0</span> data_=<span class="number">0x790573e048</span> quick_code=<span class="number">0x7138d010</span></span><br><span class="line">I  [Mapping] replacement(B) data_: <span class="number">0x790573e048</span> &lt;anonymous&gt;+<span class="number">0x48</span> perms=rwxp</span><br><span class="line">I  [Mapping] replacement(B) quick_code: <span class="number">0x7138d010</span> /system/framework/arm64/boot.oat+<span class="number">0x10d010</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">I  [Mapping] A access_flags=<span class="number">0x02000001</span></span><br><span class="line">I    access_flags_: raw=<span class="number">0x02000001</span> java_flags=<span class="number">0x0001</span> runtime_flags=<span class="number">0x02000000</span> hidden_api=whitelist</span><br><span class="line">I    access_flags_: kAccPublic|kAccCompileDontBother</span><br><span class="line"></span><br><span class="line">I  [Mapping] B access_flags=<span class="number">0x0a000101</span></span><br><span class="line">I    access_flags_: raw=<span class="number">0x0a000101</span> java_flags=<span class="number">0x0101</span> runtime_flags=<span class="number">0x0a000000</span> hidden_api=whitelist</span><br><span class="line">I    access_flags_: kAccPublic|kAccNative|kAccCompileDontBother|kAccSingleImplementation</span><br><span class="line">    </span><br><span class="line">I  [Mapping] B data_/jniCode=<span class="number">0x790573e048</span> &lt;anonymous&gt;+<span class="number">0x48</span> perms=rwxp</span><br><span class="line">I  [Mapping] B quickCode=<span class="number">0x7138d010</span> /system/framework/arm64/boot.oat+<span class="number">0x10d010</span></span><br><span class="line">I  [Mapping] scanning references to A(original)=<span class="number">0x78690c7400</span></span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>可以看到，真正的ArtMethod对象，access_flags为kAccPublic|kAccNative|kAccCompileDontBother|kAccSingleImplementation</p>
+<p>而且jniCode不为0，同时quickCode应该是quickGenericJniTrampoline</p>
+<p>但非常搞的是，data&#x2F;jniCode指向的0x790573e048，并不可以查看， Frida 自己的 range 枚举会故意隐藏这块内存。但是直接 hexdump() 成功</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0x79057fa048: ldr x16, #0x79057fa058</span><br><span class="line">0x79057fa04c: adr x17, #0x79057fa048</span><br><span class="line">0x79057fa050: br  x16</span><br><span class="line">0x79057fa054: udf #0</span><br></pre></td></tr></table></figure></div>
+
+
+
+<h2 id="检测思路"><a href="#检测思路" class="headerlink" title="检测思路"></a>检测思路</h2><p>这里就不再往下追了，总而言之，这给了我进行Frida检测了新思路，虽然依赖于特定版本的Java层Hook，但它对自吐脚本，ssl pining bypass有着显著作用。</p>
+<ol>
+<li>检测方法的ArtMethod结构体，查看AccessFlags是否被篡改为kAccCompileDontBother等属性</li>
+<li>检测art_quick_to_interpreter_bridge是否被inline hook</li>
+</ol>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> Frida学习-Android9下的Java层函数Hook原理</li>
+        <li><strong>作者:</strong> 两只羊</li>
+        <li><strong>创建于
+                :</strong> 2026-05-04 10:40:59</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2026-05-04 13:43:40
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://twogoat.github.io/2026/05/04/Frida学习-Java-Hook原理/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Reverse/">#Reverse</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E7%A0%94%E7%A9%B6/">#研究</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2026/04/30/%E4%BB%8E0%E5%88%B01%E7%9A%84llvm%E5%AD%A6%E4%B9%A0-4-%E7%AE%80%E6%98%93VMP%E5%BC%80%E5%8F%91/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">从0到1的llvm学习 (5) 简易VMP开发</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.mjs';
+
+      function loadWaline() {
+        init({
+          el: '#waline',
+          serverURL: 'https://example.example.com',
+          lang: 'zh-CN',
+          dark: 'body[class~="dark-mode"]',
+          reaction: false,
+          requiredMeta: ['nick', 'mail'],
+          emoji: [],
+          recaptchaV3Key: "wasd",
+          
+        });
+      }
+
+      if (typeof swup !== 'undefined') {
+        loadWaline();
+      } else {
+        window.addEventListener('DOMContentLoaded', loadWaline);
+      }
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">Frida学习-Android9下的Java层函数Hook原理</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8EArtMethod%E5%8F%98%E5%8C%96%E8%A7%82%E6%B5%8B"><span class="nav-text">从ArtMethod变化观测</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Frida%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="nav-text">Frida源码分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A3%80%E6%B5%8B%E6%80%9D%E8%B7%AF"><span class="nav-text">检测思路</span></a></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">两只羊</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 21 篇文章
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.8.2</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container">
+	<img src="">
+</div>
+
+	
+
+</main>
+
+
+
+<script src="/js/build/libs/Swup.min.js"></script>
+
+<script src="/js/build/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/build/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupScrollPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupPreloadPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+</script>
+
+
+
+
+	
+<script src="/js/build/tools/imageViewer.js" type="module"></script>
+
+<script src="/js/build/utils.js" type="module"></script>
+
+<script src="/js/build/main.js" type="module"></script>
+
+<script src="/js/build/layouts/navbarShrink.js" type="module"></script>
+
+<script src="/js/build/tools/scrollTopBottom.js" type="module"></script>
+
+<script src="/js/build/tools/lightDarkSwitch.js" type="module"></script>
+
+<script src="/js/build/layouts/categoryList.js" type="module"></script>
+
+
+
+
+
+    
+<script src="/js/build/tools/codeBlock.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/layouts/lazyload.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/tools/runtime.js"></script>
+
+    
+<script src="/js/build/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/build/libs/Typed.min.js"></script>
+
+  
+<script src="/js/build/plugins/typed.js" type="module"></script>
+
+
+
+
+
+
+
+
+
+
+
+    
+<script src="/js/build/tools/tocToggle.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/layouts/toc.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/plugins/tabs.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+<script src="/js/build/libs/moment-with-locales.min.js" data-swup-reload-script=""></script>
+
+
+<script src="/js/build/layouts/essays.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+
+	
+</body>
+
+</html>
