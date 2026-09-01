@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="两只羊">
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="https://twogoat.github.io/2026/05/09/ebpf学习-ebpf简单模块编写/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+    
+        
+        <meta name="description" content="test 环境搭建clang: eBPF 必须用 Clang 编译（它支持生成 BPF 字节码）。 libbpf-dev: 现代 eBPF 的核心库。 linux-tools: 包含 bpftool，用于生成内核头文件。 12sudo apt updatesudo apt install -y clang llvm libbpf-dev make gcc linux-tools-$(uname -">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ebpf学习-ebpf简单模块编写">
+<meta property="og:url" content="https://twogoat.github.io/2026/05/09/ebpf%E5%AD%A6%E4%B9%A0-ebpf%E7%AE%80%E5%8D%95%E6%A8%A1%E5%9D%97%E7%BC%96%E5%86%99/index.html">
+<meta property="og:site_name" content="twogoatの小站">
+<meta property="og:description" content="test 环境搭建clang: eBPF 必须用 Clang 编译（它支持生成 BPF 字节码）。 libbpf-dev: 现代 eBPF 的核心库。 linux-tools: 包含 bpftool，用于生成内核头文件。 12sudo apt updatesudo apt install -y clang llvm libbpf-dev make gcc linux-tools-$(uname -">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="d:\blog\hexo-blog\source_posts\ebpf%E5%AD%A6%E4%B9%A0-ebpf%E7%AE%80%E5%8D%95%E6%A8%A1%E5%9D%97%E7%BC%96%E5%86%99\image-20260511101539906.png">
+<meta property="og:image" content="d:\blog\hexo-blog\source_posts\ebpf%E5%AD%A6%E4%B9%A0-ebpf%E7%AE%80%E5%8D%95%E6%A8%A1%E5%9D%97%E7%BC%96%E5%86%99\image-20260511102009174.png">
+<meta property="og:image" content="d:\blog\hexo-blog\source_posts\ebpf%E5%AD%A6%E4%B9%A0-ebpf%E7%AE%80%E5%8D%95%E6%A8%A1%E5%9D%97%E7%BC%96%E5%86%99\666f09fc-c877-4912-bcd2-14395a0510db.png">
+<meta property="article:published_time" content="2026-05-09T09:36:29.000Z">
+<meta property="article:modified_time" content="2026-08-03T03:14:03.653Z">
+<meta property="article:author" content="twogoat&#x2F;showmaker">
+<meta property="article:tag" content="Reverse">
+<meta property="article:tag" content="研究">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="d:\blog\hexo-blog\source_posts\ebpf%E5%AD%A6%E4%B9%A0-ebpf%E7%AE%80%E5%8D%95%E6%A8%A1%E5%9D%97%E7%BC%96%E5%86%99\image-20260511101539906.png">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/redefine-favicon.svg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/redefine-favicon.svg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/redefine-favicon.svg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            ebpf学习-ebpf简单模块编写 | twogoat/showmakerの小站
+        
+    </title>
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        
+<link rel="stylesheet" href="/css/build/tailwind.css">
+
+    
+
+    
+<link rel="stylesheet" href="/fonts/GeistMono/geist-mono.css">
+
+    
+<link rel="stylesheet" href="/fonts/Geist/geist.css">
+
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+        
+<script src="/js/build/libs/anime.min.js"></script>
+
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"twogoat.github.io","root":"/","language":"zh-CN"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"5rem","h2":"4rem","h3":"2.8rem","h4":"2.5rem","h5":"2.2rem","h6":"2rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":false,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":true,"open_graph":true,"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/2.png","dark":"/images/2.png"},"title":"twogoat的妙妙屋","subtitle":{"text":["随心所欲地享受每一天\\(￣︶￣*\\))","随时随地，浏览记录O(∩_∩)O","欢迎来到我的博客(｡･∀･)ﾉﾞ","正在努力更新博客(ง •_•)ง"],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":false,"style":"default","links":{"github":null,"instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"9.3.0"}},"version":"2.8.2","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"icon":"fa-solid fa-tags","path":"/tags"},"About Me":{"icon":"fa-regular fa-link","path":"/about"},"Links":{"icon":"fa-regular fa-link","path":"/links"}},"search":{"enable":false,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":null,"show_on_mobile":true,"links":null},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    window.lang_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+
+<body>
+	<div class="progress-bar-container">
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
+
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
+
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
+
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
+
+<div class="preloader">
+    <h2 class="ml13">
+        twogoat/showmakerの小站
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
+
+        // Clear the existing content
+        textWrapper.innerHTML = '';
+
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
+
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
+
+
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
+
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
+
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
+
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                twogoat/showmakerの小站
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/archives"
+                                        >
+                                    <i class="fa-regular fa-archive fa-fw"></i>
+                                    归档
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/tags"
+                                        >
+                                    <i class="fa-solid fa-tags fa-fw"></i>
+                                    标签
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/about"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    ABOUT ME
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/links"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    链接
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/archives"
+                        >
+                            <span>
+                                归档
+                            </span>
+                            
+                                <i class="fa-regular fa-archive fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/tags"
+                        >
+                            <span>
+                                标签
+                            </span>
+                            
+                                <i class="fa-solid fa-tags fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/about"
+                        >
+                            <span>
+                                ABOUT ME
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/links"
+                        >
+                            <span>
+                                链接
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">7</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">0</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">30</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">ebpf学习-ebpf简单模块编写</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] flex-shrink-0 rounded-medium border border-border-color p-[1px]">
+				<img src="https://avatars.githubusercontent.com/u/173450716?s=400&u=ccae31065054a3a4bf4d8766ed7d532442c26449&v=4">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">两只羊</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv3</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2026-05-09 17:36:29</span>
+        <span class="mobile">2026-05-09 17:36:29</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-08-03 11:14:03</span>
+            <span class="mobile">2026-08-03 11:14:03</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<p>test</p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p><code>clang</code>: eBPF 必须用 Clang 编译（它支持生成 BPF 字节码）。</p>
+<p><code>libbpf-dev</code>: 现代 eBPF 的核心库。</p>
+<p><code>linux-tools</code>: 包含 <code>bpftool</code>，用于生成内核头文件。</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install -y clang llvm libbpf-dev make gcc linux-tools-$(uname -r) linux-tools-common</span><br></pre></td></tr></table></figure></div>
+
+<p>当然最好自己手动编译一个，避免链接过程出现问题</p>
+<div class="code-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 回到你的工作目录上一级（假设你在 ebpf-hello 目录）</span></span><br><span class="line"><span class="built_in">cd</span> ..</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 克隆源码</span></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/libbpf/libbpf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 进入源码目录进行编译</span></span><br><span class="line"><span class="built_in">cd</span> libbpf/src</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 编译（生成静态库 libbpf.a）</span></span><br><span class="line">make</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>编译流程</p>
+<div class="code-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h</span><br><span class="line">clang -g -O2 -target bpf -D__TARGET_ARCH_x86 -c hello.bpf.c -o hello.bpf.o</span><br><span class="line">bpftool gen skeleton hello.bpf.o &gt; hello.skel.h</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 编译主程序 (注意 -I 和 .a 的路径要对)</span></span><br><span class="line">clang -g -O2 -o hello main.c \</span><br><span class="line">    -I../libbpf/src \</span><br><span class="line">    ../libbpf/src/libbpf.a \</span><br><span class="line">    -lelf -lz</span><br></pre></td></tr></table></figure></div>
+
+
+
+<h2 id="通过tracepoint-hook-openat"><a href="#通过tracepoint-hook-openat" class="headerlink" title="通过tracepoint hook openat"></a>通过tracepoint hook openat</h2><p>接下来的代码测试都在x86的ubuntu中进行。</p>
+<p>接下来编写一个简单的读文件，然后输出的程序</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span> </span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> fd = open(<span class="string">&quot;flag&quot;</span>, O_RDONLY);</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (fd == <span class="number">-1</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;open failed&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">char</span> buf[<span class="number">1024</span>]; </span><br><span class="line">    </span><br><span class="line">    <span class="type">ssize_t</span> bytesRead = read(fd, buf, <span class="keyword">sizeof</span>(buf) - <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (bytesRead == <span class="number">-1</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;read failed \n&quot;</span>);</span><br><span class="line">        close(fd);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    buf[bytesRead] = <span class="string">&#x27;\0&#x27;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Context: %s\n&quot;</span>, buf);</span><br><span class="line">    close(fd);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>那么要怎么写一个简单tracepoint挂载呢</p>
+<p>首先要定义一个结构体，用于在用户态和ebpf内核代码之间数据传输并保持结构一致</p>
+<p>这里我规定了要传输pid，comm（注意这里最大只有16字节，你的命令长于16会被截断）和open的文件名</p>
+<p>common.h</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __COMMON_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __COMMON_H</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MAX_FILENAME_LEN 256</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">event</span> &#123;</span></span><br><span class="line">    <span class="type">int</span> pid;</span><br><span class="line">    <span class="type">char</span> comm[<span class="number">16</span>];</span><br><span class="line">    <span class="type">char</span> filename[MAX_FILENAME_LEN];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>然后拦截一波sys_enter_openat，这里通常就是open最终会走的系统调用</p>
+<p>这里使用的和用户态之间的数据传输方式是ringbuf，好处不用多讲了，注意在使用前，定义Ring Buffer的map，用于缓冲区预留足够空间。</p>
+<p>通过bpf_ringbuf_reserve就可以分配出一块执行共享内存，并进行操作，注意从用户态内存拷贝字符串要通过bpf_probe_read_user_str。</p>
+<p>最后通过bpf_ringbuf_submit将这段数据进行传输</p>
+<p>trace_open.bpf.c</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;vmlinux.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_helpers.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_tracing.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_core_read.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;common.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> LICENSE[] SEC(<span class="string">&quot;license&quot;</span>) = <span class="string">&quot;GPL&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义 Ring Buffer 地图</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    __uint(type, BPF_MAP_TYPE_RINGBUF);</span><br><span class="line">    __uint(max_entries, <span class="number">256</span> * <span class="number">1024</span>); <span class="comment">// 256 KB</span></span><br><span class="line">&#125; rb <span class="title function_">SEC</span><span class="params">(<span class="string">&quot;.maps&quot;</span>)</span>;</span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;tracepoint/syscalls/sys_enter_openat&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">handle_openat</span><span class="params">(<span class="keyword">struct</span> trace_event_raw_sys_enter *ctx)</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">event</span> *<span class="title">e</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 在 ringbuf 中预留空间</span></span><br><span class="line">    e = bpf_ringbuf_reserve(&amp;rb, <span class="keyword">sizeof</span>(*e), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (!e) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 获取数据</span></span><br><span class="line">    e-&gt;pid = bpf_get_current_pid_tgid() &gt;&gt; <span class="number">32</span>;</span><br><span class="line">    bpf_get_current_comm(&amp;e-&gt;comm, <span class="number">16</span>);</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// openat 的第二个参数是 filename 指针 (args[1])</span></span><br><span class="line">    <span class="comment">// 使用 bpf_probe_read_user_str 从用户空间拷贝字符串</span></span><br><span class="line">    bpf_probe_read_user_str(&amp;e-&gt;filename, <span class="keyword">sizeof</span>(e-&gt;filename), (<span class="type">char</span> *)ctx-&gt;args[<span class="number">1</span>]);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 提交数据到用户态</span></span><br><span class="line">    bpf_ringbuf_submit(e, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>然后是用户态的代码，负责将ebpf模块安装，然后进行ringbuf的通信</p>
+<p>通过ring_buffer__new可以绑定回调函数，通过ring_buffer__poll触发回调</p>
+<p>数据格式还是严格按照common.h中的结构定义</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/libbpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;trace_open.skel.h&quot;</span> <span class="comment">// 假设使用 bpftool 生成的 skeleton</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;common.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Ringbuf 回调函数</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">handle_event</span><span class="params">(<span class="type">void</span> *ctx, <span class="type">void</span> *data, <span class="type">size_t</span> data_sz)</span> &#123;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">event</span> *<span class="title">e</span> =</span> data;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;PID: %d %16s| open file: %s\n&quot;</span>, e-&gt;pid, e-&gt;comm, e-&gt;filename);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">trace_open_bpf</span> *<span class="title">skel</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ring_buffer</span> *<span class="title">rb</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line">    <span class="type">int</span> err;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 加载并附着 eBPF 程序</span></span><br><span class="line">    skel = trace_open_bpf__open_and_load();</span><br><span class="line">    <span class="keyword">if</span> (!skel) <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    err = trace_open_bpf__attach(skel);</span><br><span class="line">    <span class="keyword">if</span> (err) <span class="keyword">goto</span> cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 设置 Ring Buffer 管理器</span></span><br><span class="line">    rb = ring_buffer__new(bpf_map__fd(skel-&gt;maps.rb), handle_event, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (!rb) <span class="keyword">goto</span> cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;正在拦截 openat 系统调用... 按 Ctrl+C 退出\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 循环轮询数据</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        err = ring_buffer__poll(rb, <span class="number">100</span> <span class="comment">/* 毫秒超时 */</span>);</span><br><span class="line">        <span class="keyword">if</span> (err == -EINTR) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">if</span> (err &lt; <span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">cleanup:</span><br><span class="line">    ring_buffer__free(rb);</span><br><span class="line">    trace_open_bpf__destroy(skel);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>最后进行一波编译</p>
+<div class="code-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h</span><br><span class="line">clang -g -O2 -target bpf -D__TARGET_ARCH_x86 -c trace_open.bpf.c -o trace_open.bpf.o</span><br><span class="line">bpftool gen skeleton trace_open.bpf.o &gt; trace_open.skel.h</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 编译主程序 (注意 -I 和 .a 的路径要对)</span></span><br><span class="line">clang -g -O2 -o trace_open main.c \</span><br><span class="line">    -I../libbpf/src \</span><br><span class="line">    ../libbpf/src/libbpf.a \</span><br><span class="line">    -lelf -lz</span><br></pre></td></tr></table></figure></div>
+
+<p>编译好后，记得要加sudo，没有root权限是没有办法安装模块的</p>
+<p>接下来可以看到，成功拦截了所有open事件，但是没做任何过滤</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">twogoat@twogoat-virtual-machine:~/Desktop/ebpf/x86_64/learn_1$ sudo ./trace_open </span><br><span class="line">正在拦截 openat 系统调用... 按 Ctrl+C 退出</span><br><span class="line">PID: <span class="number">6832</span> | open file: /dev/shm/.org.chromium.Chromium.teIHRN</span><br><span class="line">PID: <span class="number">6880</span> | open file: /proc/<span class="number">13168</span>/cmdline</span><br><span class="line">PID: <span class="number">6880</span> | open file: /proc/<span class="number">13168</span>/cmdline</span><br><span class="line">PID: <span class="number">751</span> | open file: /proc/meminfo</span><br><span class="line">PID: <span class="number">6832</span> | open file: /dev/shm/.org.chromium.Chromium.rVOC6M</span><br><span class="line">PID: <span class="number">6880</span> | open file: /proc/<span class="number">13168</span>/cmdline</span><br><span class="line">PID: <span class="number">6832</span> | open file: /dev/shm/.org.chromium.Chromium.e2GvaM</span><br><span class="line">PID: <span class="number">6832</span> | open file: /dev/shm/.org.chromium.Chromium.z1QDPO</span><br><span class="line">PID: <span class="number">751</span> | open file: /proc/meminfo</span><br><span class="line">PID: <span class="number">6880</span> | open file: /proc/<span class="number">13168</span>/cmdline</span><br><span class="line">PID: <span class="number">892</span> | open file: /proc/interrupts</span><br><span class="line">PID: <span class="number">892</span> | open file: /proc/stat</span><br><span class="line">PID: <span class="number">892</span> | open file: /proc/irq/<span class="number">16</span>/smp_affinity</span><br><span class="line">PID: <span class="number">892</span> | open file: /proc/irq/<span class="number">16</span>/smp_affinity</span><br><span class="line">PID: <span class="number">892</span> | open file: /proc/irq/<span class="number">1</span>/smp_affinity</span><br><span class="line">PID: <span class="number">892</span> | open file: /proc/irq/<span class="number">1</span>/smp_affinity</span><br><span class="line">PID: <span class="number">892</span> | open file: /proc/irq/<span class="number">19</span>/smp_affinity</span><br><span class="line">PID: <span class="number">892</span> | open file: /proc/irq/<span class="number">19</span>/smp_affinity</span><br></pre></td></tr></table></figure></div>
+
+
+
+<h2 id="多个tracepoint-hook"><a href="#多个tracepoint-hook" class="headerlink" title="多个tracepoint hook"></a>多个tracepoint hook</h2><p>在ebpf模块中，一般用的都是同一个ringbuf管理器去通信，那么问题就来了，那么多系统调用，要对应那么多结构，只通过一个event结构，如何去区分呢，下面就以同时hook read和write为例</p>
+<p>在event中，header的第一项为事件类型的enum值，这个很好理解，然后就是pid和comm，也是每一个syscall的共同。</p>
+<p>后面问题就是每一个事件的结构体不同，比如open需要读出指针指向字符串文件名，而对于read调用，参数通常是fd，读地址和size</p>
+<p>通过定义对应的结构，然后再通过union联合结构体即可实现</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __COMMON_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __COMMON_H</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MAX_FILENAME_LEN 256</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">event_type</span> &#123;</span></span><br><span class="line">    EVENT_OPEN,</span><br><span class="line">    EVENT_READ,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">trace_header</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">event_type</span> <span class="title">type</span>;</span></span><br><span class="line">    <span class="type">int</span> pid;</span><br><span class="line">    <span class="type">char</span> comm[<span class="number">16</span>];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">open_data</span> &#123;</span></span><br><span class="line">    <span class="type">char</span> filename[MAX_FILENAME_LEN];</span><br><span class="line">    <span class="type">int</span> flags;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">read_data</span> &#123;</span></span><br><span class="line">    <span class="type">int</span> fd;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> buf_ptr;</span><br><span class="line">    <span class="type">size_t</span> count;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">event</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">trace_header</span> <span class="title">header</span>;</span> <span class="comment">// 这里同步修改</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">open_data</span> <span class="title">open</span>;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">read_data</span> <span class="title">read</span>;</span></span><br><span class="line">    &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>在ebpf模块中，只需指定对应的结构体字段进行填充即可</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;vmlinux.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_helpers.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_tracing.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_core_read.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;common.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> LICENSE[] SEC(<span class="string">&quot;license&quot;</span>) = <span class="string">&quot;GPL&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义 Ring Buffer 地图</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    __uint(type, BPF_MAP_TYPE_RINGBUF);</span><br><span class="line">    __uint(max_entries, <span class="number">256</span> * <span class="number">1024</span>); <span class="comment">// 256 KB</span></span><br><span class="line">&#125; rb <span class="title function_">SEC</span><span class="params">(<span class="string">&quot;.maps&quot;</span>)</span>;</span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;tracepoint/syscalls/sys_enter_openat&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">handle_openat</span><span class="params">(<span class="keyword">struct</span> trace_event_raw_sys_enter *ctx)</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">event</span> *<span class="title">e</span> =</span> bpf_ringbuf_reserve(&amp;rb, <span class="keyword">sizeof</span>(*e), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (!e) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 填充公共部分</span></span><br><span class="line">    e-&gt;header.type = EVENT_OPEN;</span><br><span class="line">    e-&gt;header.pid = bpf_get_current_pid_tgid() &gt;&gt; <span class="number">32</span>;</span><br><span class="line">    bpf_get_current_comm(&amp;e-&gt;header.comm, <span class="number">16</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 填充 Open 特有部分</span></span><br><span class="line">    bpf_probe_read_user_str(&amp;e-&gt;open.filename, <span class="keyword">sizeof</span>(e-&gt;open.filename), (<span class="type">char</span> *)ctx-&gt;args[<span class="number">1</span>]);</span><br><span class="line">    e-&gt;open.flags = (<span class="type">int</span>)ctx-&gt;args[<span class="number">2</span>];</span><br><span class="line"></span><br><span class="line">    bpf_ringbuf_submit(e, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;tracepoint/syscalls/sys_enter_read&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">handle_read</span><span class="params">(<span class="keyword">struct</span> trace_event_raw_sys_enter *ctx)</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">event</span> *<span class="title">e</span> =</span> bpf_ringbuf_reserve(&amp;rb, <span class="keyword">sizeof</span>(*e), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (!e) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    e-&gt;header.type = EVENT_READ;</span><br><span class="line">    e-&gt;header.pid = bpf_get_current_pid_tgid() &gt;&gt; <span class="number">32</span>;</span><br><span class="line">    bpf_get_current_comm(&amp;e-&gt;header.comm, <span class="number">16</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 填充 Read 特有部分</span></span><br><span class="line">    e-&gt;read.fd = (<span class="type">int</span>)ctx-&gt;args[<span class="number">0</span>];</span><br><span class="line">    e-&gt;read.buf_ptr = (<span class="type">unsigned</span> <span class="type">long</span>)ctx-&gt;args[<span class="number">1</span>];</span><br><span class="line">    e-&gt;read.count = (<span class="type">size_t</span>)ctx-&gt;args[<span class="number">2</span>];</span><br><span class="line"></span><br><span class="line">    bpf_ringbuf_submit(e, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>在用户态最终就是一个指令分发器</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/libbpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;trace_open.skel.h&quot;</span> <span class="comment">// 假设使用 bpftool 生成的 skeleton</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;common.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Ringbuf 回调函数</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">handle_event</span><span class="params">(<span class="type">void</span> *ctx, <span class="type">void</span> *data, <span class="type">size_t</span> data_sz)</span> &#123;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">event</span> *<span class="title">e</span> =</span> data;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 所有的公共信息通过 e-&gt;header 获取</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;[%d] %-16s | &quot;</span>, e-&gt;header.pid, e-&gt;header.comm);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 根据类型分发给不同的处理逻辑</span></span><br><span class="line">    <span class="keyword">switch</span> (e-&gt;header.type) &#123;</span><br><span class="line">        <span class="keyword">case</span> EVENT_OPEN:</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;OPEN: %s (flags: %d)\n&quot;</span>, e-&gt;open.filename, e-&gt;open.flags);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> EVENT_READ:</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;READ: fd %d, addr 0x%lx, len %zu\n&quot;</span>, </span><br><span class="line">                   e-&gt;read.fd, e-&gt;read.buf_ptr, e-&gt;read.count);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Unknown event\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">trace_open_bpf</span> *<span class="title">skel</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ring_buffer</span> *<span class="title">rb</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line">    <span class="type">int</span> err;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 加载并附着 eBPF 程序</span></span><br><span class="line">    skel = trace_open_bpf__open_and_load();</span><br><span class="line">    <span class="keyword">if</span> (!skel) <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    err = trace_open_bpf__attach(skel);</span><br><span class="line">    <span class="keyword">if</span> (err) <span class="keyword">goto</span> cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 设置 Ring Buffer 管理器</span></span><br><span class="line">    rb = ring_buffer__new(bpf_map__fd(skel-&gt;maps.rb), handle_event, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (!rb) <span class="keyword">goto</span> cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;正在拦截 openat 系统调用... 按 Ctrl+C 退出\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 循环轮询数据</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        err = ring_buffer__poll(rb, <span class="number">100</span> <span class="comment">/* 毫秒超时 */</span>);</span><br><span class="line">        <span class="keyword">if</span> (err == -EINTR) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">if</span> (err &lt; <span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">cleanup:</span><br><span class="line">    ring_buffer__free(rb);</span><br><span class="line">    trace_open_bpf__destroy(skel);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<h2 id="uprobe编写"><a href="#uprobe编写" class="headerlink" title="uprobe编写"></a>uprobe编写</h2><p>在此之前，我曾经写过一个极其吐血的调试器项目，其最大的亮点，就是在进程的任意偏移，添加hook脚本</p>
+<p>比如说一个rc4加密，我想要直接拿到xor_stream，在0x158e偏移处，分别读取al和byte [rbp - 0x115]</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="D:\blog\hexo-blog\source_posts\ebpf学习-ebpf简单模块编写\image-20260511101539906.png"
+                      alt="image-20260511101539906"
+                ></p>
+<p>其实大概就是可以通过特定的偏移，去hook截取当前运行时的寄存器和内存等，可以快速生成VM等复杂状态的执行流</p>
+<div class="code-container" data-rel="Python"><figure class="iseeu highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> tgdbg <span class="keyword">import</span>*</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">hook_xor_stream</span>(<span class="params">dbg: Debugger</span>):</span><br><span class="line">    al = dbg.reg_read(REG_AL)</span><br><span class="line">    rbp = dbg.reg_read(REG_RBP)</span><br><span class="line">    xor_val = dbg.mem_read_byte(rbp - <span class="number">0x115</span>)</span><br><span class="line">    result = al ^ xor_val</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;al:02x&#125;</span> ^ <span class="subst">&#123;xor_val:02x&#125;</span> = <span class="subst">&#123;result:02x&#125;</span>&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    dbg = Debugger(<span class="string">&quot;rc4&quot;</span>, <span class="string">&quot;&quot;</span>)</span><br><span class="line">    dbg.hook_add(dbg.base_addr + <span class="number">0x158E</span>, hook_xor_stream)</span><br><span class="line">    dbg.start_debugger()</span><br><span class="line">    dbg.close_debugger()</span><br></pre></td></tr></table></figure></div>
+
+<p>可以看到，成功拦截到了中间的寄存器和内存</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="D:\blog\hexo-blog\source_posts\ebpf学习-ebpf简单模块编写\image-20260511102009174.png"
+                      alt="image-20260511102009174"
+                ></p>
+<p>那么问题来了，为什么不用frida去hook，答案是我当然用过，但问题是inlinehook用于函数头还好，但如果是函数中间的偏移，将会极其不稳定，基本上就是hook一次后程序就崩了，大概是是寄存器状态没处理好，最好通过int3异常处理的方式。</p>
+<p>那么问题来了，有没有我自己是手搓了，后来发现其实ebpf的uprobe也能完成类似的工作</p>
+<p>首先仍然需要定义ringbuff的通信结构</p>
+<p>common.h</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __COMMON_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __COMMON_H</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rc4_event</span> &#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> al;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> xor_val;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>然后写以一个uprobe的挂载点，这里传入的参数即为regs，可以直接读取，再配合bpf_probe_read_user读取用户态内存，就可以完成上面的工作了</p>
+<p>trace.bpf.c</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;vmlinux.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_helpers.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_tracing.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;common.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> LICENSE[] SEC(<span class="string">&quot;license&quot;</span>) = <span class="string">&quot;GPL&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    __uint(type, BPF_MAP_TYPE_RINGBUF);</span><br><span class="line">    __uint(max_entries, <span class="number">256</span> * <span class="number">1024</span>);</span><br><span class="line">&#125; rb <span class="title function_">SEC</span><span class="params">(<span class="string">&quot;.maps&quot;</span>)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用通用的 SEC 标签</span></span><br><span class="line">SEC(<span class="string">&quot;uprobe&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">handle_xor_stream</span><span class="params">(<span class="keyword">struct</span> pt_regs *ctx)</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rc4_event</span> *<span class="title">e</span>;</span></span><br><span class="line"></span><br><span class="line">    e = bpf_ringbuf_reserve(&amp;rb, <span class="keyword">sizeof</span>(*e), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (!e) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 直接读取寄存器</span></span><br><span class="line">    e-&gt;al = ctx-&gt;ax &amp; <span class="number">0xFF</span>; <span class="comment">// 获取 AL (RAX 的低 8 位)</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2. 计算并读取用户态内存 [RBP - 0x115]</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span> rbp = ctx-&gt;bp;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span> target_addr = rbp - <span class="number">0x115</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 必须使用 probe_read_user，因为这是用户空间地址</span></span><br><span class="line">    bpf_probe_read_user(&amp;e-&gt;xor_val, <span class="number">1</span>, (<span class="type">void</span> *)target_addr);</span><br><span class="line"></span><br><span class="line">    bpf_ringbuf_submit(e, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>在用户态的安装程序中，通过bpf_program__attach_uprobe函数，进行断点的安装</p>
+<p>main.c</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/libbpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;trace.skel.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;common.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 回调函数：处理内核传回的数据</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">handle_event</span><span class="params">(<span class="type">void</span> *ctx, <span class="type">void</span> *data, <span class="type">size_t</span> data_sz)</span> &#123;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">rc4_event</span> *<span class="title">e</span> =</span> data;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;[RC4 Trace] %02x ^ %02x = %02x\n&quot;</span>, e-&gt;al, e-&gt;xor_val, e-&gt;al ^ e-&gt;xor_val);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">trace_bpf</span> *<span class="title">skel</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ring_buffer</span> *<span class="title">rb</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">bpf_link</span> *<span class="title">link</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (argc &lt; <span class="number">2</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;用法: %s &lt;二进制路径&gt;\n&quot;</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 打开并加载 eBPF 程序</span></span><br><span class="line">    skel = trace_bpf__open_and_load();</span><br><span class="line">    <span class="keyword">if</span> (!skel) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;加载 eBPF 失败\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 动态安装 Uprobe (核心步骤)</span></span><br><span class="line">    <span class="comment">// 对应你 Python 里的 dbg.hook_add(dbg.base_addr + 0x158E, ...)</span></span><br><span class="line">    link = bpf_program__attach_uprobe(</span><br><span class="line">        skel-&gt;progs.handle_xor_stream, <span class="comment">// BPF 程序</span></span><br><span class="line">        <span class="literal">false</span>,                         <span class="comment">// false 为 uprobe, true 为 uretprobe</span></span><br><span class="line">        <span class="number">-1</span>,                            <span class="comment">// PID (-1 表示监控所有进程)</span></span><br><span class="line">        argv[<span class="number">1</span>],                       <span class="comment">// 二进制文件路径 (如 &quot;./rc4&quot;)</span></span><br><span class="line">        <span class="number">0x158E</span>                         <span class="comment">// 文件偏移量</span></span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!link) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;安装 Uprobe 失败，请检查路径或偏移量\n&quot;</span>);</span><br><span class="line">        <span class="keyword">goto</span> cleanup;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;成功在 %s:0x158E 安装钩子...\n&quot;</span>, argv[<span class="number">1</span>]);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 设置 Ring Buffer 轮询</span></span><br><span class="line">    rb = ring_buffer__new(bpf_map__fd(skel-&gt;maps.rb), handle_event, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (!rb) <span class="keyword">goto</span> cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (ring_buffer__poll(rb, <span class="number">100</span>) &lt; <span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">cleanup:</span><br><span class="line">    ring_buffer__free(rb);</span><br><span class="line">    bpf_link__destroy(link);</span><br><span class="line">    trace_bpf__destroy(skel);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>运行结果</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="D:\blog\hexo-blog\source_posts\ebpf学习-ebpf简单模块编写\666f09fc-c877-4912-bcd2-14395a0510db.png"
+                      alt="666f09fc-c877-4912-bcd2-14395a0510db"
+                ></p>
+<p>可以看到，虽然说功能上是实现了，但仍有那么一点欣慰的是，我脚本的运行方法和接口更加方便吧…</p>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> ebpf学习-ebpf简单模块编写</li>
+        <li><strong>作者:</strong> 两只羊</li>
+        <li><strong>创建于
+                :</strong> 2026-05-09 17:36:29</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2026-08-03 11:14:03
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://twogoat.github.io/2026/05/09/ebpf学习-ebpf简单模块编写/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Reverse/">#Reverse</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E7%A0%94%E7%A9%B6/">#研究</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="prev" rel="prev" href="/2026/05/09/Frida%E5%AD%A6%E4%B9%A0-Frida%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%AD%A6%E4%B9%A0/">
+					<span class="left arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-left"></i>
+					</span>
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">Frida学习-Frida spwn模式启动APP流程学习</span>
+						<span class="post-nav-item">上一篇</span>
+					</span>
+				</a>
+			</div>
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2026/05/09/ebpf%E5%AD%A6%E4%B9%A0-%E8%AE%A4%E8%AF%86ebpf/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">ebpf学习-从linux内核源码开始</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.mjs';
+
+      function loadWaline() {
+        init({
+          el: '#waline',
+          serverURL: 'https://example.example.com',
+          lang: 'zh-CN',
+          dark: 'body[class~="dark-mode"]',
+          reaction: false,
+          requiredMeta: ['nick', 'mail'],
+          emoji: [],
+          recaptchaV3Key: "wasd",
+          
+        });
+      }
+
+      if (typeof swup !== 'undefined') {
+        loadWaline();
+      } else {
+        window.addEventListener('DOMContentLoaded', loadWaline);
+      }
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">ebpf学习-ebpf简单模块编写</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="nav-text">环境搭建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%9A%E8%BF%87tracepoint-hook-openat"><span class="nav-text">通过tracepoint hook openat</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E4%B8%AAtracepoint-hook"><span class="nav-text">多个tracepoint hook</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#uprobe%E7%BC%96%E5%86%99"><span class="nav-text">uprobe编写</span></a></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">两只羊</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 30 篇文章
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.8.2</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container">
+	<img src="">
+</div>
+
+	
+
+</main>
+
+
+
+<script src="/js/build/libs/Swup.min.js"></script>
+
+<script src="/js/build/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/build/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupScrollPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupPreloadPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+</script>
+
+
+
+
+	
+<script src="/js/build/tools/imageViewer.js" type="module"></script>
+
+<script src="/js/build/utils.js" type="module"></script>
+
+<script src="/js/build/main.js" type="module"></script>
+
+<script src="/js/build/layouts/navbarShrink.js" type="module"></script>
+
+<script src="/js/build/tools/scrollTopBottom.js" type="module"></script>
+
+<script src="/js/build/tools/lightDarkSwitch.js" type="module"></script>
+
+<script src="/js/build/layouts/categoryList.js" type="module"></script>
+
+
+
+
+
+    
+<script src="/js/build/tools/codeBlock.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/layouts/lazyload.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/tools/runtime.js"></script>
+
+    
+<script src="/js/build/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/build/libs/Typed.min.js"></script>
+
+  
+<script src="/js/build/plugins/typed.js" type="module"></script>
+
+
+
+
+
+
+
+
+
+
+
+    
+<script src="/js/build/tools/tocToggle.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/layouts/toc.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/plugins/tabs.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+<script src="/js/build/libs/moment-with-locales.min.js" data-swup-reload-script=""></script>
+
+
+<script src="/js/build/layouts/essays.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+
+	
+</body>
+
+</html>

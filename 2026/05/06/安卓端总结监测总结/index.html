@@ -21,17 +21,21 @@
     
     
         
-        <meta property="og:type" content="article">
+        <meta name="description" content="Root检测BL锁检测 系统属性（Properties）检测  这是最简单但也最容易被伪装的层级。  ro.boot.flash.locked: 值为 1 表示锁定，0 表示解锁。 ro.boot.verifiedbootstate: green: 锁定且签名验证通过。 orange: 已解锁（最常见的检测点）。 yellow: 加载了自定义证书。 red: 验证失败。   ro.securebo">
+<meta property="og:type" content="article">
 <meta property="og:title" content="安卓端总结监测总结">
 <meta property="og:url" content="https://twogoat.github.io/2026/05/06/%E5%AE%89%E5%8D%93%E7%AB%AF%E6%80%BB%E7%BB%93%E7%9B%91%E6%B5%8B%E6%80%BB%E7%BB%93/index.html">
 <meta property="og:site_name" content="twogoatの小站">
+<meta property="og:description" content="Root检测BL锁检测 系统属性（Properties）检测  这是最简单但也最容易被伪装的层级。  ro.boot.flash.locked: 值为 1 表示锁定，0 表示解锁。 ro.boot.verifiedbootstate: green: 锁定且签名验证通过。 orange: 已解锁（最常见的检测点）。 yellow: 加载了自定义证书。 red: 验证失败。   ro.securebo">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="d:\blog\hexo-blog\source_posts\%E5%AE%89%E5%8D%93%E7%AB%AF%E6%80%BB%E7%BB%93%E7%9B%91%E6%B5%8B%E6%80%BB%E7%BB%93\f59e77b3-3419-4385-a347-2cb19ca9751a.png">
 <meta property="article:published_time" content="2026-05-06T03:27:39.000Z">
-<meta property="article:modified_time" content="2026-05-06T03:27:52.592Z">
+<meta property="article:modified_time" content="2026-05-12T02:44:56.268Z">
 <meta property="article:author" content="twogoat&#x2F;showmaker">
 <meta property="article:tag" content="Reverse">
 <meta property="article:tag" content="研究">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="d:\blog\hexo-blog\source_posts\%E5%AE%89%E5%8D%93%E7%AB%AF%E6%80%BB%E7%BB%93%E7%9B%91%E6%B5%8B%E6%80%BB%E7%BB%93\f59e77b3-3419-4385-a347-2cb19ca9751a.png">
     
     
     <!--- Icon Part-->
@@ -508,7 +512,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">24</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">30</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -559,8 +563,8 @@
     
         <span class="article-date article-meta-item">
             <i class="fa-regular fa-wrench"></i>&nbsp;
-            <span class="desktop">2026-05-06 11:27:52</span>
-            <span class="mobile">2026-05-06 11:27:52</span>
+            <span class="desktop">2026-05-12 10:44:56</span>
+            <span class="mobile">2026-05-12 10:44:56</span>
             <span class="hover-info">更新</span>
         </span>
     
@@ -602,7 +606,90 @@
 
 
 		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
-			
+			<h2 id="Root检测"><a href="#Root检测" class="headerlink" title="Root检测"></a>Root检测</h2><h3 id="BL锁检测"><a href="#BL锁检测" class="headerlink" title="BL锁检测"></a>BL锁检测</h3><ol>
+<li>系统属性（Properties）检测</li>
+</ol>
+<p>这是最简单但也最容易被伪装的层级。</p>
+<ul>
+<li><strong><code>ro.boot.flash.locked</code></strong>: 值为 <code>1</code> 表示锁定，<code>0</code> 表示解锁。</li>
+<li><strong><code>ro.boot.verifiedbootstate</code></strong>:<ul>
+<li><code>green</code>: 锁定且签名验证通过。</li>
+<li><code>orange</code>: 已解锁（最常见的检测点）。</li>
+<li><code>yellow</code>: 加载了自定义证书。</li>
+<li><code>red</code>: 验证失败。</li>
+</ul>
+</li>
+<li><strong><code>ro.secureboot.devicelock</code></strong>: 部分厂商（如华为、小米）自定义的锁定状态属性。</li>
+</ul>
+<ol start="2">
+<li>内核启动参数 (<code>/proc/cmdline</code>)</li>
+</ol>
+<p>系统启动时，Bootloader 会将硬件状态传递给内核。</p>
+<ul>
+<li>在 <code>/proc/cmdline</code> 中，通常包含 <code>androidboot.verifiedbootstate=orange</code> 或 <code>androidboot.flash.locked=0</code>。</li>
+<li><strong>关键点</strong>：由于 <code>/proc/cmdline</code> 是内核导出的只读信息，传统的 <code>setprop</code> 无法修改它。</li>
+</ul>
+<ol start="3">
+<li>安全环境校验 (TEE &#x2F; Keymaster)</li>
+</ol>
+<p>这是目前最主流的<strong>硬件级检测</strong>：</p>
+<ul>
+<li>App 会生成一个密钥对，并要求 TEE（可信执行环境）对该密钥进行 <strong>Attestation（证书颁发）</strong>。</li>
+<li>TEE 会在证书中包含硬件状态信息。如果 BL 已解锁，TEE 签发的证书里会明确标注 <code>SecurityLevel</code> 为 <code>Software</code> 或标注 Bootloader 状态。</li>
+<li><strong>不可伪装性</strong>：因为证书是由 TEE 内置的私钥签名的，外部无法篡改。</li>
+</ul>
+<ol start="4">
+<li>Play Integrity API (原 SafetyNet)</li>
+</ol>
+<p>Google 的云端校验方案：</p>
+<ul>
+<li><strong>MEETS_DEVICE_INTEGRITY</strong>: 检查基本完整性（是否 Root&#x2F;解锁）。</li>
+<li><strong>MEETS_STRONG_INTEGRITY</strong>: <strong>终极杀招</strong>。它要求硬件级的 TEE 验证，只要 BL 解锁，绝无可能通过此项。</li>
+</ul>
+<h3 id="magisk"><a href="#magisk" class="headerlink" title="magisk"></a>magisk</h3><p>&#x2F;proc&#x2F;self&#x2F;mounts查看挂载信息里是否有magisk的痕迹</p>
+<h3 id="kernelsu检测"><a href="#kernelsu检测" class="headerlink" title="kernelsu检测"></a>kernelsu检测</h3><p>分别收集__NR_faccessat和__NR_fchownat的执行时间，kernelsu会对这些函数进行hook</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="D:\blog\hexo-blog\source_posts\安卓端总结监测总结\f59e77b3-3419-4385-a347-2cb19ca9751a.png"
+                      alt="f59e77b3-3419-4385-a347-2cb19ca9751a"
+                ></p>
+<h2 id="hook-调试检测"><a href="#hook-调试检测" class="headerlink" title="hook&#x2F;调试检测"></a>hook&#x2F;调试检测</h2><h3 id="Frida端口扫描"><a href="#Frida端口扫描" class="headerlink" title="Frida端口扫描"></a>Frida端口扫描</h3><p>Frida 在默认模式下运行（例如通过 frida-server 模式）时，会在设备上启动一个服务端，并默认监听 27042 和 27043 端口，用于与 PC 端的 Frida 客户端进行通信。</p>
+<h3 id="Maps记录检测"><a href="#Maps记录检测" class="headerlink" title="Maps记录检测"></a>Maps记录检测</h3><p>读取&#x2F;proc&#x2F;self&#x2F;maps，检测程序是否加载了frida相关的库，最常见的就是frida-agent.so。</p>
+<p>为了对应魔改，还会检测是否存在未命名且具有 r-xp（可读可执行）权限的大段内存</p>
+<h3 id="fd检测"><a href="#fd检测" class="headerlink" title="fd检测"></a>fd检测</h3><p>遍历 &#x2F;proc&#x2F;self&#x2F;fd&#x2F; 目录，并通过 readlink 获取每个 fd 指向的真实目标。</p>
+<p>检测是否存在指向 Frida 特有文件的描述符，例如包含 linjector 关键字的路径，或者异常的 Socket 链接（用于与 frida-server 交互）。</p>
+<h3 id="Trace状态检查"><a href="#Trace状态检查" class="headerlink" title="Trace状态检查"></a>Trace状态检查</h3><p>读取 &#x2F;proc&#x2F;self&#x2F;status 文件，检查其中的 TracerPid 字段。</p>
+<p>在正常运行状态下，TracerPid 的值应为 <code>0</code>。如果该值大于 0，说明当前 App 正在被另一个进程（很可能就是 Frida、调试器或注入工具）附加和调试。</p>
+<h3 id="父子进程检测"><a href="#父子进程检测" class="headerlink" title="父子进程检测"></a>父子进程检测</h3><p>fork出一个子进程，然后attach，像frida的attach模式，调试器附加，都没办法再生效了。</p>
+<h3 id="线程检测"><a href="#线程检测" class="headerlink" title="线程检测"></a>线程检测</h3><p>App 遍历 &#x2F;proc&#x2F;self&#x2F;task&#x2F; 目录（或者 &#x2F;proc&#x2F;self&#x2F;status 文件），读取各个线程的名称（通过读取 comm 或 status 文件）。</p>
+<p>寻找特定的特征线程名，例如：gmain、gdbus、gum-js-loop、pool-frida 等。</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">2026-03-04 13:03:09.451 11077-11077 FridaDetect             twogoat.checker2                     E  Thread Detection: gmain </span><br><span class="line">2026-03-04 13:03:09.451 11077-11077 FridaDetect             twogoat.checker2                     E  Thread Detection: gdbus </span><br><span class="line">2026-03-04 13:03:09.451 11077-11077 FridaDetect             twogoat.checker2                     E  Thread Detection: pool-frida </span><br></pre></td></tr></table></figure></div>
+
+
+
+
+
+<h3 id="内存校验"><a href="#内存校验" class="headerlink" title="内存校验"></a>内存校验</h3><p>通常采用crc校验等对一段代码段校验完整性，或者检查函数头是否有inline hook的痕迹</p>
+<p>为了防止被stackplz等工具检测到，可以使用process_vm_readv系统调用来把内存复制到缓冲区</p>
+<h3 id="ArtMethod检测"><a href="#ArtMethod检测" class="headerlink" title="ArtMethod检测"></a>ArtMethod检测</h3><p>通过解析java方法的access_flags和entry_point_from_quick_compiled_code是否遭到篡改检测</p>
+<h3 id="多线程检测"><a href="#多线程检测" class="headerlink" title="多线程检测"></a>多线程检测</h3><p>由于上面很多检测都需要实时检测，不可避免的要用到多线程，因此用pthread_create是最常见的做法，但也是容易直接被替换为一个空函数直接逃过所有检测</p>
+<p>因此现在很常见的做法是使用更底层的clone函数创建线程</p>
+<p>或者在线程里用系统调用实时更新一个全局变量的心跳，在另一边，不容易被发现的地方，比如在godot游戏引擎中，创建一个实时刷新的函数，检测自己获取的时间与心跳的差值，同时可以防止反调试</p>
+<p>这里还有思路就是多线程一直解锁，业务层一直上锁，但是这里不能用互斥锁，因为规定一个mutex不能在当前线程被lock，在另一个线程unlock，不允许跨线程操作</p>
+<p>这里使用了信号量，敢替换sem_wait直接阻塞</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;jni.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;semaphore.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;android/log.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">sem_t</span> g_security_gate;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">bool</span> <span class="title function_">perform_heavy_check</span><span class="params">()</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span>* <span class="title function_">detection_thread_entry</span><span class="params">(<span class="type">void</span>* arg)</span> &#123;</span><br><span class="line">    LOGD(<span class="string">&quot;Detection thread started.&quot;</span>);</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (perform_heavy_check()) &#123;</span><br><span class="line">            <span class="type">int</span> val;</span><br><span class="line">            sem_getvalue(&amp;g_security_gate, &amp;val);</span><br><span class="line">            <span class="keyword">if</span> (val &lt; <span class="number">1</span>) &#123;</span><br><span class="line">                sem_post(&amp;g_security_gate);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            LOGE(<span class="string">&quot;Frida Detected! Application Terminating...&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        usleep(<span class="number">500000</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">createCheckThread</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (sem_init(&amp;g_security_gate, <span class="number">0</span>, <span class="number">0</span>) != <span class="number">0</span>) &#123;</span><br><span class="line">        LOGE(<span class="string">&quot;Semaphore init failed!&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">pthread_t</span> t;</span><br><span class="line">    <span class="keyword">if</span> (pthread_create(&amp;t, nullptr, detection_thread_entry, nullptr) != <span class="number">0</span>) &#123;</span><br><span class="line">        LOGE(<span class="string">&quot;Failed to create detection thread!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    pthread_detach(t);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span></span><br><span class="line">JNIEXPORT jstring JNICALL</span><br><span class="line"><span class="title function_">Java_twogoat_opsu3_fridachecker_MainActivity_getText</span><span class="params">(JNIEnv *env, jobject thiz, jstring text)</span> &#123;</span><br><span class="line"></span><br><span class="line">    LOGD(<span class="string">&quot;Business: getText called. Checking security gate...&quot;</span>);</span><br><span class="line"></span><br><span class="line">    sem_wait(&amp;g_security_gate);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> text;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>不过要注意sem_wait会阻塞当前线程，所以最好不要在主线程阻塞，不然整个程序就真的卡死了</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> <span class="title function_">registerButton</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">Button</span> <span class="variable">button</span> <span class="operator">=</span> findViewById(R.id.button);</span><br><span class="line">    <span class="type">TextView</span> <span class="variable">editText</span> <span class="operator">=</span> findViewById(R.id.editTextText);</span><br><span class="line">    <span class="type">TextView</span> <span class="variable">sampleText</span> <span class="operator">=</span> findViewById(R.id.sample_text);</span><br><span class="line">    button.setOnClickListener(v -&gt; &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">inputText</span> <span class="operator">=</span> editText.getText().toString();</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">Thread</span>(() -&gt; &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line">                <span class="type">String</span> <span class="variable">result</span> <span class="operator">=</span> getText(inputText);</span><br><span class="line">                runOnUiThread(() -&gt; sampleText.setText(result));</span><br><span class="line"></span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<h3 id="流量检测"><a href="#流量检测" class="headerlink" title="流量检测"></a>流量检测</h3><p>frida server与agent之间通过dbus协议传输，server与rpc之间通过websocket传输，经过抓包发现都是明文且特征明显，所以可以hook相关的网络协议函数，进行侦测</p>
+<h3 id="Trampoline特征查找"><a href="#Trampoline特征查找" class="headerlink" title="Trampoline特征查找"></a>Trampoline特征查找</h3><p>Frida生成的匿名函数，前面都是固定的机器码，是很多对寄存器的操作，可以直接在一些可疑的匿名函数段尝试暴力匹配</p>
+
 		</div>
 
 		
@@ -616,7 +703,7 @@
         
             <li>
                 <strong>更新于
-                    :</strong> 2026-05-06 11:27:52
+                    :</strong> 2026-05-12 10:44:56
             </li>
         
         <li>
@@ -656,6 +743,18 @@
 
 		
 		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="prev" rel="prev" href="/2026/05/09/ebpf%E5%AD%A6%E4%B9%A0-%E8%AE%A4%E8%AF%86ebpf/">
+					<span class="left arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-left"></i>
+					</span>
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">ebpf学习-从linux内核源码开始</span>
+						<span class="post-nav-item">上一篇</span>
+					</span>
+				</a>
+			</div>
 			
 			
 			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
@@ -726,7 +825,7 @@
 	<div class="post-toc">
 		<div class="toc-title">目录</div>
 		<div class="page-title">安卓端总结监测总结</div>
-		
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Root%E6%A3%80%E6%B5%8B"><span class="nav-text">Root检测</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#BL%E9%94%81%E6%A3%80%E6%B5%8B"><span class="nav-text">BL锁检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#magisk"><span class="nav-text">magisk</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#kernelsu%E6%A3%80%E6%B5%8B"><span class="nav-text">kernelsu检测</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hook-%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B"><span class="nav-text">hook&#x2F;调试检测</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Frida%E7%AB%AF%E5%8F%A3%E6%89%AB%E6%8F%8F"><span class="nav-text">Frida端口扫描</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Maps%E8%AE%B0%E5%BD%95%E6%A3%80%E6%B5%8B"><span class="nav-text">Maps记录检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fd%E6%A3%80%E6%B5%8B"><span class="nav-text">fd检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Trace%E7%8A%B6%E6%80%81%E6%A3%80%E6%9F%A5"><span class="nav-text">Trace状态检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%88%B6%E5%AD%90%E8%BF%9B%E7%A8%8B%E6%A3%80%E6%B5%8B"><span class="nav-text">父子进程检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E6%A3%80%E6%B5%8B"><span class="nav-text">线程检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%A0%A1%E9%AA%8C"><span class="nav-text">内存校验</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ArtMethod%E6%A3%80%E6%B5%8B"><span class="nav-text">ArtMethod检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E7%BA%BF%E7%A8%8B%E6%A3%80%E6%B5%8B"><span class="nav-text">多线程检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%81%E9%87%8F%E6%A3%80%E6%B5%8B"><span class="nav-text">流量检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Trampoline%E7%89%B9%E5%BE%81%E6%9F%A5%E6%89%BE"><span class="nav-text">Trampoline特征查找</span></a></li></ol></li></ol>
 
 	</div>
 </div>
@@ -753,7 +852,7 @@
                 
                 <p class="post-count space-x-0.5">
                     <span>
-                        共撰写了 24 篇文章
+                        共撰写了 30 篇文章
                     </span>
                     
                 </p>

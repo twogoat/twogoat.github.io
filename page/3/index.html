@@ -539,7 +539,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">24</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">30</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -579,7 +579,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">24</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">30</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -594,6 +594,401 @@
 			<div class="main-content">
 				<div class="home-content-container">
     <ul class="home-article-list">
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+                            从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            最近在学习ollvm魔改的过程中，首先就被配环境困扰了好久现在就来总结一下
+主要参考的是这位大佬的博客，照理来说跟着就可以了，这里补充自己的一些踩坑点
+【清羽】Windows10下编译OLLVM-14.x_ollvm 编译优化后-CSDN博客
+cmake，ninja用最新版的就好了
+ollvm版本使用该大佬的
+https://github.com/yangyiyu08/ollvm-proje...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Sat May 31 2025 16:50:46 GMT+0800">
+                
+                    2025-05-31
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/05/31/%E4%BB%8E0%E5%88%B01%E7%9A%84ollvm-1-ndk%E4%B8%8Ellvm-pass%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">阅读全文<span class="seo-reader-text">从0到1的llvm学习 (1) ndk与llvm pass调试环境搭建</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2025/05/21/%E5%9B%A7%E6%AC%A1%E5%85%83%E5%8D%8F%E8%AE%AE%E5%88%86%E6%9E%90%E4%B8%8E%E7%A0%B4%E8%A7%A3/">
+                            囧次元协议分析与破解
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            抓包分析抓包，发现响应被加密，且app-api-verify-sign需要分析
+
+定位到加密算法在com.toolboxvtwo.appleboxvtwo.utils.ApiEncryptUtils中
+
+通过nmap库的classes3Init0方法进行注册
+
+用ida打开
+
+用unidbg跑一下，发现果然动态注册了
+
+12345encryptData =&gt;  1747744848en...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Wed May 21 2025 19:41:27 GMT+0800">
+                
+                    2025-05-21
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/05/21/%E5%9B%A7%E6%AC%A1%E5%85%83%E5%8D%8F%E8%AE%AE%E5%88%86%E6%9E%90%E4%B8%8E%E7%A0%B4%E8%A7%A3/">阅读全文<span class="seo-reader-text">囧次元协议分析与破解</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2025/05/18/%E7%99%BD%E7%9B%92AES%E7%9A%84%E5%88%9D%E6%8E%A2/">
+                            白盒AES的初探
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            众所周知，密码手需要考虑的东西很多，但逆向手只要学会一把梭就完事了
+main函数，首先进行一次标准的加密，然后进行16次的故障注入
+1234567891011121314151617181920212223242526272829303132333435//// Created by Liming Shao on 2018/4/24.//#include &lt;stdio.h&gt;#in...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Sun May 18 2025 13:09:41 GMT+0800">
+                
+                    2025-05-18
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/05/18/%E7%99%BD%E7%9B%92AES%E7%9A%84%E5%88%9D%E6%8E%A2/">阅读全文<span class="seo-reader-text">白盒AES的初探</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2025/05/16/%E6%9F%90%E8%88%AA%E7%A9%BAapp%E7%9A%84%E5%8D%8F%E8%AE%AE%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/">
+                            某航空app的协议逆向分析
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            前言本案例分析仅用于学习交流，禁止用于非法用途这个app是我在最近的逆向学习中，对自己来说比较困难的一个案例，其中涉及到frida检测，unidbg补环境，ollvm分析等一些之前不太熟悉的操作，在此记录一下自己的学习过程。
+抓包我们第一步对该app进行抓包分析，可以看到上传的参数全部被加密，看不出任何有效参数
+
+frida检测与脱壳在查看app的信息的时候，显示是360加固
+
+尝试使用fr...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Fri May 16 2025 17:34:05 GMT+0800">
+                
+                    2025-05-16
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/05/16/%E6%9F%90%E8%88%AA%E7%A9%BAapp%E7%9A%84%E5%8D%8F%E8%AE%AE%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/">阅读全文<span class="seo-reader-text">某航空app的协议逆向分析</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2025/05/15/Frida%E6%A3%80%E6%B5%8B%E4%B8%8Bfrida-dexdump%E7%9A%84%E4%BD%BF%E7%94%A8%E5%A7%BF%E5%8A%BF/">
+                            Frida检测下frida-dexdump的使用姿势
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            最近在逆向某app的时候，碰到了360加固，我这个刚入门的萌新只会frida-dexdump
+
+一把梭下去直接报错了
+
+看看加载了哪个so，发现是经典的libmsaoaidsec.so多线程反调
+
+直接hook clone绕过
+12345678910111213141516171819202122232425262728293031323334function nop_64(addr) &#...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Thu May 15 2025 16:25:13 GMT+0800">
+                
+                    2025-05-15
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/05/15/Frida%E6%A3%80%E6%B5%8B%E4%B8%8Bfrida-dexdump%E7%9A%84%E4%BD%BF%E7%94%A8%E5%A7%BF%E5%8A%BF/">阅读全文<span class="seo-reader-text">Frida检测下frida-dexdump的使用姿势</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
+        
+            <li class="home-article-item">
+
+                
+
+                
+
+                
+                <div class="flex flex-col gap-5 px-7 pb-7 pt-7">
+                    <h3 class="home-article-title">
+                        <a href="/2025/05/10/%E6%9F%90%E4%B9%A0%E6%83%AFapp%E7%9A%84Signature%E5%88%86%E6%9E%90%E4%B8%8Evip%E7%A0%B4%E8%A7%A3/">
+                            某习惯app的Signature分析与vip破解
+                        </a>
+                    </h3>
+
+                    <div class="home-article-content markdown-body">
+                        
+                            
+                            脱壳
+360的壳，这里上frida-dexdump就可以了
+请求Signature分析测试一下激活码的接口
+
+12345678910111213141516171819POST /daily/app/flag/flagShow HTTP/1.1Host: xianbeikeji.comAccept-Language: zh-CN,zh;q=0.8User-Agent: okhttp-okgo...
+                        
+                    </div>
+
+                    <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fa-solid fa-calendars"></i>&nbsp;
+            <span class="home-article-date" data-date="Sat May 10 2025 13:24:58 GMT+0800">
+                
+                    2025-05-10
+                
+            </span>
+        </span>
+        
+        
+            <span class="home-article-tag">
+                <i class="fa-solid fa-tags"></i>&nbsp;
+                <ul>
+                    
+                        <li>
+                            
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                        </li>
+                    
+                        <li>
+                            | 
+                            <a href="/tags/%E5%AE%89%E5%8D%93/">安卓</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            </span>
+        
+    </div>
+
+    <a href="/2025/05/10/%E6%9F%90%E4%B9%A0%E6%83%AFapp%E7%9A%84Signature%E5%88%86%E6%9E%90%E4%B8%8Evip%E7%A0%B4%E8%A7%A3/">阅读全文<span class="seo-reader-text">某习惯app的Signature分析与vip破解</span>&nbsp;<i class="fa-solid fa-angle-right"></i></a>
+</div>
+
+                </div>
+            </li>
         
             <li class="home-article-item">
 
@@ -635,12 +1030,12 @@ hook pthread_create[原创]【安卓逆向】libmsaoaidsec.so反调试及算法�
                     
                         <li>
                             
-                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
                         </li>
                     
                         <li>
                             | 
-                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
                         </li>
                     
                         <li>
@@ -711,12 +1106,12 @@ jadx打开，直接搜索vip字符串
                     
                         <li>
                             
-                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
                         </li>
                     
                         <li>
                             | 
-                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>&nbsp;
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
                         </li>
                     
                         <li>
@@ -784,12 +1179,12 @@ checkSecutity检测了root和debug，直接frida绕过
                     
                         <li>
                             
-                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                            <a href="/tags/CTF/">CTF</a>&nbsp;
                         </li>
                     
                         <li>
                             | 
-                            <a href="/tags/CTF/">CTF</a>&nbsp;
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
                         </li>
                     
                         <li>
@@ -859,12 +1254,12 @@ checkSecutity检测了root和debug，直接frida绕过
                     
                         <li>
                             
-                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                            <a href="/tags/CTF/">CTF</a>&nbsp;
                         </li>
                     
                         <li>
                             | 
-                            <a href="/tags/CTF/">CTF</a>&nbsp;
+                            <a href="/tags/Reverse/">Reverse</a>&nbsp;
                         </li>
                     
                         <li>
@@ -913,7 +1308,7 @@ checkSecutity检测了root和debug，直接frida绕过
                 
                 <p class="post-count space-x-0.5">
                     <span>
-                        共撰写了 24 篇文章
+                        共撰写了 30 篇文章
                     </span>
                     
                 </p>

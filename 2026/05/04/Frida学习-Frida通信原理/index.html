@@ -21,19 +21,19 @@
     
     
         
-        <meta name="description" content="从tcpdump开始我们在研究Frida检测与绕过的时候，一直绕不开的几个点 扫描Frida server的默认端口27042 读&#x2F;proc&#x2F;self&#x2F;task&#x2F;检测特征线程，比如 1232026-03-04 13:03:09.451 11077-11077 FridaDetect             twogoat.checker2">
+        <meta name="description" content="从tcpdump开始 我们在研究Frida检测与绕过的时候，一直绕不开的几个点 扫描Frida server的默认端口27042 读&#x2F;proc&#x2F;self&#x2F;task&#x2F;检测特征线程，比如 1232026-03-04 13:03:09.451 11077-11077 FridaDetect             twogoat.checker2">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Frida学习-Frida通信原理">
 <meta property="og:url" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Frida%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86/index.html">
 <meta property="og:site_name" content="twogoatの小站">
-<meta property="og:description" content="从tcpdump开始我们在研究Frida检测与绕过的时候，一直绕不开的几个点 扫描Frida server的默认端口27042 读&#x2F;proc&#x2F;self&#x2F;task&#x2F;检测特征线程，比如 1232026-03-04 13:03:09.451 11077-11077 FridaDetect             twogoat.checker2">
+<meta property="og:description" content="从tcpdump开始 我们在研究Frida检测与绕过的时候，一直绕不开的几个点 扫描Frida server的默认端口27042 读&#x2F;proc&#x2F;self&#x2F;task&#x2F;检测特征线程，比如 1232026-03-04 13:03:09.451 11077-11077 FridaDetect             twogoat.checker2">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Frida%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86/image-20260504160233786.png">
 <meta property="og:image" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Frida%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86/image-20260504160343610.png">
 <meta property="og:image" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Frida%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86/image-20260504160434283.png">
 <meta property="og:image" content="https://twogoat.github.io/2026/05/04/Frida%E5%AD%A6%E4%B9%A0-Frida%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86/image-20260504160546563.png">
 <meta property="article:published_time" content="2026-05-04T07:54:28.000Z">
-<meta property="article:modified_time" content="2026-05-06T03:28:37.916Z">
+<meta property="article:modified_time" content="2026-09-01T04:40:41.261Z">
 <meta property="article:author" content="twogoat&#x2F;showmaker">
 <meta property="article:tag" content="Reverse">
 <meta property="article:tag" content="研究">
@@ -515,7 +515,7 @@
         <div class="label text-third-text-color text-sm">分类</div>
     </a>
     <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
-        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">24</div>
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">30</div>
         <div class="label text-third-text-color text-sm">文章</div>
     </a>
 </div>
@@ -566,8 +566,8 @@
     
         <span class="article-date article-meta-item">
             <i class="fa-regular fa-wrench"></i>&nbsp;
-            <span class="desktop">2026-05-06 11:28:37</span>
-            <span class="mobile">2026-05-06 11:28:37</span>
+            <span class="desktop">2026-09-01 12:40:41</span>
+            <span class="mobile">2026-09-01 12:40:41</span>
             <span class="hover-info">更新</span>
         </span>
     
@@ -609,7 +609,8 @@
 
 
 		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
-			<h2 id="从tcpdump开始"><a href="#从tcpdump开始" class="headerlink" title="从tcpdump开始"></a>从tcpdump开始</h2><p>我们在研究Frida检测与绕过的时候，一直绕不开的几个点</p>
+			<p>从tcpdump开始</p>
+<p>我们在研究Frida检测与绕过的时候，一直绕不开的几个点</p>
 <p>扫描Frida server的默认端口27042</p>
 <p>读&#x2F;proc&#x2F;self&#x2F;task&#x2F;检测特征线程，比如</p>
 <div class="code-container" data-rel="Py"><figure class="iseeu highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">2026</span>-03-04 <span class="number">13</span>:03:<span class="number">09.451</span> <span class="number">11077</span>-<span class="number">11077</span> FridaDetect             twogoat.checker2                     E  Thread Detection: gmain </span><br><span class="line"><span class="number">2026</span>-03-04 <span class="number">13</span>:03:<span class="number">09.451</span> <span class="number">11077</span>-<span class="number">11077</span> FridaDetect             twogoat.checker2                     E  Thread Detection: gdbus </span><br><span class="line"><span class="number">2026</span>-03-04 <span class="number">13</span>:03:<span class="number">09.451</span> <span class="number">11077</span>-<span class="number">11077</span> FridaDetect             twogoat.checker2                     E  Thread Detection: pool-frida </span><br></pre></td></tr></table></figure></div>
@@ -665,7 +666,7 @@
         
             <li>
                 <strong>更新于
-                    :</strong> 2026-05-06 11:28:37
+                    :</strong> 2026-09-01 12:40:41
             </li>
         
         <li>
@@ -787,7 +788,7 @@
 	<div class="post-toc">
 		<div class="toc-title">目录</div>
 		<div class="page-title">Frida学习-Frida通信原理</div>
-		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8Etcpdump%E5%BC%80%E5%A7%8B"><span class="nav-text">从tcpdump开始</span></a></li></ol>
+		
 
 	</div>
 </div>
@@ -814,7 +815,7 @@
                 
                 <p class="post-count space-x-0.5">
                     <span>
-                        共撰写了 24 篇文章
+                        共撰写了 30 篇文章
                     </span>
                     
                 </p>

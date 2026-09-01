@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="两只羊">
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="https://twogoat.github.io/2026/05/09/ebpf学习-认识ebpf/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+    
+        
+        <meta name="description" content="什么是ebpf eBPF(extended Berkeley Packet Filter)是Linux内核3.18引入的革命性技术,它允许在内核空间运行用户定义的沙盒程序,无需修改内核代码或加载内核模块。传统的内核观测手段(如SystemTap、kprobe)需要编译内核模块,存在系统崩溃风险且灵活性差。eBPF通过JIT编译和验证器机制,在保证安全性的前提下,实现了动态、高性能的内核可编程能力。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ebpf学习-从linux内核源码开始">
+<meta property="og:url" content="https://twogoat.github.io/2026/05/09/ebpf%E5%AD%A6%E4%B9%A0-%E8%AE%A4%E8%AF%86ebpf/index.html">
+<meta property="og:site_name" content="twogoatの小站">
+<meta property="og:description" content="什么是ebpf eBPF(extended Berkeley Packet Filter)是Linux内核3.18引入的革命性技术,它允许在内核空间运行用户定义的沙盒程序,无需修改内核代码或加载内核模块。传统的内核观测手段(如SystemTap、kprobe)需要编译内核模块,存在系统崩溃风险且灵活性差。eBPF通过JIT编译和验证器机制,在保证安全性的前提下,实现了动态、高性能的内核可编程能力。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-09T01:35:43.000Z">
+<meta property="article:modified_time" content="2026-05-09T09:37:01.641Z">
+<meta property="article:author" content="twogoat&#x2F;showmaker">
+<meta property="article:tag" content="Reverse">
+<meta property="article:tag" content="研究">
+<meta name="twitter:card" content="summary">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/redefine-favicon.svg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/redefine-favicon.svg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/redefine-favicon.svg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            ebpf学习-从linux内核源码开始 | twogoat/showmakerの小站
+        
+    </title>
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        
+<link rel="stylesheet" href="/css/build/tailwind.css">
+
+    
+
+    
+<link rel="stylesheet" href="/fonts/GeistMono/geist-mono.css">
+
+    
+<link rel="stylesheet" href="/fonts/Geist/geist.css">
+
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+        
+<script src="/js/build/libs/anime.min.js"></script>
+
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"twogoat.github.io","root":"/","language":"zh-CN"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"5rem","h2":"4rem","h3":"2.8rem","h4":"2.5rem","h5":"2.2rem","h6":"2rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":false,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":true,"open_graph":true,"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/2.png","dark":"/images/2.png"},"title":"twogoat的妙妙屋","subtitle":{"text":["随心所欲地享受每一天\\(￣︶￣*\\))","随时随地，浏览记录O(∩_∩)O","欢迎来到我的博客(｡･∀･)ﾉﾞ","正在努力更新博客(ง •_•)ง"],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":false,"style":"default","links":{"github":null,"instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"9.3.0"}},"version":"2.8.2","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"icon":"fa-solid fa-tags","path":"/tags"},"About Me":{"icon":"fa-regular fa-link","path":"/about"},"Links":{"icon":"fa-regular fa-link","path":"/links"}},"search":{"enable":false,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":null,"show_on_mobile":true,"links":null},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    window.lang_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+
+<body>
+	<div class="progress-bar-container">
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
+
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
+
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
+
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
+
+<div class="preloader">
+    <h2 class="ml13">
+        twogoat/showmakerの小站
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
+
+        // Clear the existing content
+        textWrapper.innerHTML = '';
+
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
+
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
+
+
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
+
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
+
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
+
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                twogoat/showmakerの小站
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/archives"
+                                        >
+                                    <i class="fa-regular fa-archive fa-fw"></i>
+                                    归档
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/tags"
+                                        >
+                                    <i class="fa-solid fa-tags fa-fw"></i>
+                                    标签
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/about"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    ABOUT ME
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/links"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    链接
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/archives"
+                        >
+                            <span>
+                                归档
+                            </span>
+                            
+                                <i class="fa-regular fa-archive fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/tags"
+                        >
+                            <span>
+                                标签
+                            </span>
+                            
+                                <i class="fa-solid fa-tags fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/about"
+                        >
+                            <span>
+                                ABOUT ME
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/links"
+                        >
+                            <span>
+                                链接
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">7</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">0</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">30</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">ebpf学习-从linux内核源码开始</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] flex-shrink-0 rounded-medium border border-border-color p-[1px]">
+				<img src="https://avatars.githubusercontent.com/u/173450716?s=400&u=ccae31065054a3a4bf4d8766ed7d532442c26449&v=4">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">两只羊</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv3</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2026-05-09 09:35:43</span>
+        <span class="mobile">2026-05-09 09:35:43</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-05-09 17:37:01</span>
+            <span class="mobile">2026-05-09 17:37:01</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<h2 id="什么是ebpf"><a href="#什么是ebpf" class="headerlink" title="什么是ebpf"></a>什么是ebpf</h2><blockquote>
+<p>eBPF(extended Berkeley Packet Filter)是Linux内核3.18引入的革命性技术,它允许在内核空间运行用户定义的沙盒程序,无需修改内核代码或加载内核模块。传统的内核观测手段(如SystemTap、kprobe)需要编译内核模块,存在系统崩溃风险且灵活性差。eBPF通过JIT编译和验证器机制,在保证安全性的前提下,实现了动态、高性能的内核可编程能力。从网络包过滤到性能分析,从安全审计到容器网络,eBPF正在重新定义系统可观测性的边界。</p>
+</blockquote>
+<p>嗯，大概意思就是，在以前的linux版本中，你想写一个内核模块，就要通过传统写.ko的方式，而这种通常一不注意就内核崩溃了。而eBPF则给用户态提供了在内核空间操作的沙箱环境，可以写一些自定义模块去观测改变内核。</p>
+<p>在ebpf中，大概有这么几种挂载方式 tracepoint (raw_tracepoint)，kprobe，uprobe，fprobe</p>
+<p>tracepoint是官方预留的挂载点，非常稳定，版本的变化不会影响太大，比如说我们要拦截一个拦截openat的系统调用，只需要通过设定一个SEC的标致就好了</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">SEC(<span class="string">&quot;tracepoint/syscalls/sys_enter_openat&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">handle_openat</span><span class="params">(<span class="keyword">struct</span> trace_event_raw_sys_enter *ctx)</span> &#123;</span><br><span class="line">    <span class="type">int</span> dfd = ctx-&gt;args[<span class="number">0</span>];</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *filename = (<span class="type">const</span> <span class="type">char</span> *)ctx-&gt;args[<span class="number">1</span>];</span><br><span class="line">    bpf_printk(<span class="string">&quot;Tracepoint: Opening file dfd=%d\n&quot;</span>, dfd);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+
+
+<p>Raw Tracepoint则是原生的参数，没有一个特定的结构体，需要我们根据内核源码去指定</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 同样拦截系统调用入口，但不走 syscalls 子类，直接挂在最底层</span></span><br><span class="line">SEC(<span class="string">&quot;raw_tracepoint/sys_enter&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">handle_raw_sys_enter</span><span class="params">(<span class="keyword">struct</span> bpf_raw_tracepoint_args *ctx)</span> &#123;</span><br><span class="line">    <span class="comment">// ctx-&gt;args[0] 实际上是指向 struct pt_regs 的指针</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">pt_regs</span> *<span class="title">regs</span> =</span> (<span class="keyword">struct</span> pt_regs *)ctx-&gt;args[<span class="number">0</span>];</span><br><span class="line">    <span class="comment">// ctx-&gt;args[1] 是系统调用号</span></span><br><span class="line">    <span class="type">long</span> syscall_id = ctx-&gt;args[<span class="number">1</span>];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (syscall_id == <span class="number">257</span>) &#123; <span class="comment">// 257 是 x86_64 的 openat</span></span><br><span class="line">        bpf_printk(<span class="string">&quot;Raw TP: Caught syscall %ld\n&quot;</span>, syscall_id);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+
+
+<p>kprobe为动态内核探针。tracepoint只能挂载官方预留的点，而kprobe几乎可以hook所有的内核函数，而且理论上可以hook任意偏移，而问题同样明显，很容易导致崩溃。其原理也是通过设置int3断点，触发异常后跳到ebpf逻辑。</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 动态 Hook 内核真正的文件打开函数 do_sys_openat2</span></span><br><span class="line">SEC(<span class="string">&quot;kprobe/do_sys_openat2&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">BPF_KPROBE</span><span class="params">(handle_kprobe_open, <span class="type">int</span> dfd, <span class="type">const</span> <span class="type">char</span> *filename, <span class="keyword">struct</span> open_how *how)</span> &#123;</span><br><span class="line">    <span class="comment">// 使用 BPF_KPROBE 宏，libbpf 会自动帮你从 pt_regs 寄存器里把参数提取出来</span></span><br><span class="line">    bpf_printk(<span class="string">&quot;Kprobe: Target file %s\n&quot;</span>, filename);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对应函数的返回处</span></span><br><span class="line">SEC(<span class="string">&quot;kretprobe/do_sys_openat2&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">BPF_KRETPROBE</span><span class="params">(handle_kretprobe_open, <span class="type">int</span> ret)</span> &#123;</span><br><span class="line">    bpf_printk(<span class="string">&quot;Kretprobe: Return value (fd) = %d\n&quot;</span>, ret);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>uprobe为动态用户态探针，用法和我们平常用到的hook原理差不多</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Hook libc 的 malloc 函数 (具体绑定的二进制路径在用户态 loader 程序中指定)</span></span><br><span class="line">SEC(<span class="string">&quot;uprobe/libc:malloc&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">BPF_UPROBE</span><span class="params">(handle_malloc, <span class="type">size_t</span> size)</span> &#123;</span><br><span class="line">    <span class="comment">// 直接抓取用户进程调用 malloc 时传入的 size 参数</span></span><br><span class="line">    bpf_printk(<span class="string">&quot;Uprobe: App requested malloc(%lu)\n&quot;</span>, size);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>fprobe较新内核上，结合BTF (BPF Type Format) 和 ftrace，它是用来取代 Kprobe 的。</p>
+<p>还记得编写调试器的时候，和frida hook的区别吗，它不再使用抛出异常(int3)，而是直接修改机器码实现Trampoline，性能开销几乎可以忽略不计。</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用 fentry Hook do_sys_openat2</span></span><br><span class="line">SEC(<span class="string">&quot;fentry/do_sys_openat2&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">BPF_PROG</span><span class="params">(handle_fentry_open, <span class="type">int</span> dfd, <span class="type">const</span> <span class="type">char</span> *filename, <span class="keyword">struct</span> open_how *how)</span> &#123;</span><br><span class="line">    <span class="comment">// 根本不需要管寄存器！BTF 魔法让你直接拿到原汁原味的 C 语言变量</span></span><br><span class="line">    bpf_printk(<span class="string">&quot;Fentry: High perf hook on %s\n&quot;</span>, filename);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+
+
+<p>上面所写的代码都是在内核态后端完成的，那么要怎么把数据传输回用户态，也就是工具的前端呢</p>
+<p>有两种，perf (perf buffer)和ringbuf (BPF ring buffer)</p>
+<p>在低版本下只能通过perf实现，它给每一个CPU核心分配了一个独立的环形缓冲区(ringbuf)，那么问题也来了，假如我有128核的CPU，那只有一个CPU在处理缓冲，其他都空载，那就很浪费了。</p>
+<p>而且由于不同的事件，比如处理open，read，write，本来是按照顺序严格执行的，但由于read所在的cpu核心缓冲区空闲先处理完，导致前端先接收到了read，这就导致顺序错乱了。</p>
+<p>而且数据传输也要二次拷贝，要先把待传输的数据在ebpf栈上设置，再拷贝到内核缓冲区，然后再从内核缓冲区拷贝到用户态的内存中。</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);</span><br><span class="line">    __uint(key_size, <span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">    __uint(value_size, <span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">&#125; events <span class="title function_">SEC</span><span class="params">(<span class="string">&quot;.maps&quot;</span>)</span>;</span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;uprobe&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">handle_dump</span><span class="params">(<span class="keyword">struct</span> pt_regs *ctx)</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">my_data</span> <span class="title">data</span> =</span> &#123;&#125;; <span class="comment">// 1. 先在 eBPF 程序的栈上分配空间</span></span><br><span class="line">    </span><br><span class="line">    bpf_probe_read_user(&amp;data.payload, <span class="keyword">sizeof</span>(data.payload), (<span class="type">void</span> *)PT_REGS_PARM1(ctx));</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2. 将栈上的数据，拷贝发送到当前 CPU 的 Perf Buffer 中</span></span><br><span class="line">    bpf_perf_event_output(ctx, &amp;events, BPF_F_CURRENT_CPU, &amp;data, <span class="keyword">sizeof</span>(data));</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>‘而现在的ringbuf，全部CPU核心全局共享一块缓冲区，使用自旋锁避免了并发时的竞争，现在的事件信息也严格按照时序，非常舒服，更重要的是其零拷贝的特性，在内核中直接分配出一块共享缓冲区操作，不需要再进行栈拷贝</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    __uint(type, BPF_MAP_TYPE_RINGBUF);</span><br><span class="line">    __uint(max_entries, <span class="number">256</span> * <span class="number">1024</span>); <span class="comment">// 共享池大小：256 KB</span></span><br><span class="line">&#125; events <span class="title function_">SEC</span><span class="params">(<span class="string">&quot;.maps&quot;</span>)</span>;</span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;uprobe&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">handle_dump</span><span class="params">(<span class="keyword">struct</span> pt_regs *ctx)</span> &#123;</span><br><span class="line">    <span class="comment">// 1. 预定空间 (Reserve)：直接在全局 Ringbuf 里占好位置，拿到指针！</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">my_data</span> *<span class="title">data</span> =</span> bpf_ringbuf_reserve(&amp;events, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> my_data), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (!data) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>; <span class="comment">// 缓冲区满了，丢弃</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 直接向这块共享内存写入数据！(无需再占用栈空间)</span></span><br><span class="line">    bpf_probe_read_user(&amp;data-&gt;payload, <span class="keyword">sizeof</span>(data-&gt;payload), (<span class="type">void</span> *)PT_REGS_PARM1(ctx));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 提交数据 (Submit)：通知用户态可以来取了</span></span><br><span class="line">    bpf_ringbuf_submit(data, <span class="number">0</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></div>
+
+
+
+<h2 id="syscall原理学习-tracepoint挂载点原理"><a href="#syscall原理学习-tracepoint挂载点原理" class="headerlink" title="syscall原理学习&#x2F;tracepoint挂载点原理"></a>syscall原理学习&#x2F;tracepoint挂载点原理</h2><p>那哪些才属于linux的内核空间呢，最常见的syscall的系统调用，比如一个open函数，在rax设置了open的系统调用号，执行了syscall后，CPU就从r3切换到r0。</p>
+<p>尝试去翻看android源码进行学习，这里就以x86为例，<a class="link"   target="_blank" rel="noopener" href="https://cs.android.com/android/kernel/superproject/+/common-android-mainline:common/" >https://cs.android.com/android/kernel/superproject/+/common-android-mainline:common/<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a></p>
+<p>进入内核态的第一行代码entry_SYSCALL_64，这里是纯汇编实现的（位于arch&#x2F;x86&#x2F;entry&#x2F;entry_64.S）</p>
+<p>这里主要是处理用户态的栈，切换到内核栈，然后就进入了do_syscall_64函数（位于arch&#x2F;x86&#x2F;entry&#x2F;common.c）</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line">SYM_CODE_START(entry_SYSCALL_64)</span><br><span class="line">	UNWIND_HINT_ENTRY</span><br><span class="line">	ENDBR</span><br><span class="line"></span><br><span class="line">	swapgs</span><br><span class="line">	/* tss.sp2 is scratch space. */</span><br><span class="line">	movq	%rsp, PER_CPU_VAR(cpu_tss_rw + TSS_sp2)</span><br><span class="line">	SWITCH_TO_KERNEL_CR3 scratch_reg=%rsp</span><br><span class="line">	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp</span><br><span class="line"></span><br><span class="line">SYM_INNER_LABEL(entry_SYSCALL_64_safe_stack, SYM_L_GLOBAL)</span><br><span class="line">	ANNOTATE_NOENDBR</span><br><span class="line"></span><br><span class="line">	/* Construct struct pt_regs on stack */</span><br><span class="line">	pushq	$__USER_DS				/* pt_regs-&gt;ss */</span><br><span class="line">	pushq	PER_CPU_VAR(cpu_tss_rw + TSS_sp2)	/* pt_regs-&gt;sp */</span><br><span class="line">	pushq	%r11					/* pt_regs-&gt;flags */</span><br><span class="line">	pushq	$__USER_CS				/* pt_regs-&gt;cs */</span><br><span class="line">	pushq	%rcx					/* pt_regs-&gt;ip */</span><br><span class="line">SYM_INNER_LABEL(entry_SYSCALL_64_after_hwframe, SYM_L_GLOBAL)</span><br><span class="line">	pushq	%rax					/* pt_regs-&gt;orig_ax */</span><br><span class="line"></span><br><span class="line">	PUSH_AND_CLEAR_REGS rax=$-ENOSYS</span><br><span class="line"></span><br><span class="line">	/* IRQs are off. */</span><br><span class="line">	movq	%rsp, %rdi</span><br><span class="line">	/* Sign extend the lower 32bit as syscall numbers are treated as int */</span><br><span class="line">	movslq	%eax, %rsi</span><br><span class="line"></span><br><span class="line">	/* clobbers %rax, make sure it is after saving the syscall nr */</span><br><span class="line">	IBRS_ENTER</span><br><span class="line">	UNTRAIN_RET</span><br><span class="line">	CLEAR_BRANCH_HISTORY</span><br><span class="line"></span><br><span class="line">	call	do_syscall_64		/* returns with IRQs disabled */</span><br><span class="line"></span><br><span class="line">	/*</span><br><span class="line">	 * Try to use SYSRET instead of IRET if we&#x27;re returning to</span><br><span class="line">	 * a completely clean 64-bit userspace context.  If we&#x27;re not,</span><br><span class="line">	 * go to the slow exit path.</span><br><span class="line">	 * In the Xen PV case we must use iret anyway.</span><br><span class="line">	 */</span><br><span class="line"></span><br><span class="line">	ALTERNATIVE &quot;testb %al, %al; jz swapgs_restore_regs_and_return_to_usermode&quot;, \</span><br><span class="line">		&quot;jmp swapgs_restore_regs_and_return_to_usermode&quot;, X86_FEATURE_XENPV</span><br><span class="line"></span><br><span class="line">	/*</span><br><span class="line">	 * We win! This label is here just for ease of understanding</span><br><span class="line">	 * perf profiles. Nothing jumps here.</span><br><span class="line">	 */</span><br><span class="line">syscall_return_via_sysret:</span><br><span class="line">	IBRS_EXIT</span><br><span class="line">	POP_REGS pop_rdi=0</span><br><span class="line"></span><br><span class="line">	/*</span><br><span class="line">	 * Now all regs are restored except RSP and RDI.</span><br><span class="line">	 * Save old stack pointer and switch to trampoline stack.</span><br><span class="line">	 */</span><br><span class="line">	movq	%rsp, %rdi</span><br><span class="line">	movq	PER_CPU_VAR(cpu_tss_rw + TSS_sp0), %rsp</span><br><span class="line">	UNWIND_HINT_END_OF_STACK</span><br><span class="line"></span><br><span class="line">	pushq	RSP-RDI(%rdi)	/* RSP */</span><br><span class="line">	pushq	(%rdi)		/* RDI */</span><br><span class="line"></span><br><span class="line">	/*</span><br><span class="line">	 * We are on the trampoline stack.  All regs except RDI are live.</span><br><span class="line">	 * We can do future final exit work right here.</span><br><span class="line">	 */</span><br><span class="line">	STACKLEAK_ERASE_NOCLOBBER</span><br><span class="line"></span><br><span class="line">	SWITCH_TO_USER_CR3_STACK scratch_reg=%rdi</span><br><span class="line"></span><br><span class="line">	popq	%rdi</span><br><span class="line">	popq	%rsp</span><br><span class="line">SYM_INNER_LABEL(entry_SYSRETQ_unsafe_stack, SYM_L_GLOBAL)</span><br><span class="line">	ANNOTATE_NOENDBR</span><br><span class="line">	swapgs</span><br><span class="line">	CLEAR_CPU_BUFFERS</span><br><span class="line">	sysretq</span><br><span class="line">SYM_INNER_LABEL(entry_SYSRETQ_end, SYM_L_GLOBAL)</span><br><span class="line">	ANNOTATE_NOENDBR</span><br><span class="line">	int3</span><br><span class="line">SYM_CODE_END(entry_SYSCALL_64)</span><br></pre></td></tr></table></figure></div>
+
+<p>其中比较重要的就是这几句，将ax，也就是系统调用号先压入栈，然后再根据普通函数的调用约定构建struct pt_regs结构体</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">pushq	%rax					/* pt_regs-&gt;orig_ax */</span><br><span class="line">PUSH_AND_CLEAR_REGS rax=$-ENOSYS</span><br><span class="line">call	do_syscall_64		/* returns with IRQs disabled */</span><br></pre></td></tr></table></figure></div>
+
+<p>继续看看do_syscall_64的实现，nr即为系统调用号，这里还不是真正的入口，还是先进行了一波x86和x64的分发</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">__visible noinstr <span class="type">bool</span> <span class="title function_">do_syscall_64</span><span class="params">(<span class="keyword">struct</span> pt_regs *regs, <span class="type">int</span> nr)</span></span><br><span class="line">&#123;</span><br><span class="line">	nr = syscall_enter_from_user_mode(regs, nr);</span><br><span class="line"></span><br><span class="line">	instrumentation_begin();</span><br><span class="line">	add_random_kstack_offset();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!do_syscall_x64(regs, nr) &amp;&amp; !do_syscall_x32(regs, nr) &amp;&amp; nr != <span class="number">-1</span>) &#123;</span><br><span class="line">		<span class="comment">/* Invalid system call, but still a system call. */</span></span><br><span class="line">		regs-&gt;ax = __x64_sys_ni_syscall(regs);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	instrumentation_end();</span><br><span class="line">	syscall_exit_to_user_mode(regs);</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Check that the register state is valid for using SYSRET to exit</span></span><br><span class="line"><span class="comment">	 * to userspace.  Otherwise use the slower but fully capable IRET</span></span><br><span class="line"><span class="comment">	 * exit path.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* XEN PV guests always use the IRET path */</span></span><br><span class="line">	<span class="keyword">if</span> (cpu_feature_enabled(X86_FEATURE_XENPV))</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* SYSRET requires RCX == RIP and R11 == EFLAGS */</span></span><br><span class="line">	<span class="keyword">if</span> (unlikely(regs-&gt;cx != regs-&gt;ip || regs-&gt;r11 != regs-&gt;flags))</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* CS and SS must match the values set in MSR_STAR */</span></span><br><span class="line">	<span class="keyword">if</span> (unlikely(regs-&gt;cs != __USER_CS || regs-&gt;ss != __USER_DS))</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * On Intel CPUs, SYSRET with non-canonical RCX/RIP will #GP</span></span><br><span class="line"><span class="comment">	 * in kernel space.  This essentially lets the user take over</span></span><br><span class="line"><span class="comment">	 * the kernel, since userspace controls RSP.</span></span><br><span class="line"><span class="comment">	 *</span></span><br><span class="line"><span class="comment">	 * TASK_SIZE_MAX covers all user-accessible addresses other than</span></span><br><span class="line"><span class="comment">	 * the deprecated vsyscall page.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">if</span> (unlikely(regs-&gt;ip &gt;= TASK_SIZE_MAX))</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * SYSRET cannot restore RF.  It can restore TF, but unlike IRET,</span></span><br><span class="line"><span class="comment">	 * restoring TF results in a trap from userspace immediately after</span></span><br><span class="line"><span class="comment">	 * SYSRET.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">if</span> (unlikely(regs-&gt;flags &amp; (X86_EFLAGS_RF | X86_EFLAGS_TF)))</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Use SYSRET to exit to userspace */</span></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>继续追syscall_enter_from_user_mode，这里可以看到，nr已经确定命名为了syscall，也就是系统调用号</p>
+<p>enter_from_user_mode(regs)，用于准备RCU（Read-Copy Update，内核的一种锁机制&#x2F;数据同步机制）</p>
+<p>instrumentation_begin()用于解除追踪，ebpf在这之后才可以介入内核</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * syscall_enter_from_user_mode - Establish state and check and handle work</span></span><br><span class="line"><span class="comment"> *				  before invoking a syscall</span></span><br><span class="line"><span class="comment"> * @regs:	Pointer to currents pt_regs</span></span><br><span class="line"><span class="comment"> * @syscall:	The syscall number</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Invoked from architecture specific syscall entry code with interrupts</span></span><br><span class="line"><span class="comment"> * disabled. The calling code has to be non-instrumentable. When the</span></span><br><span class="line"><span class="comment"> * function returns all state is correct, interrupts are enabled and the</span></span><br><span class="line"><span class="comment"> * subsequent functions can be instrumented.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * This is the combination of enter_from_user_mode() and</span></span><br><span class="line"><span class="comment"> * syscall_enter_from_user_mode_work() to be used when there is no</span></span><br><span class="line"><span class="comment"> * architecture specific work to be done between the two.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Returns: The original or a modified syscall number. See</span></span><br><span class="line"><span class="comment"> * syscall_enter_from_user_mode_work() for further explanation.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">static</span> __always_inline <span class="type">long</span> <span class="title function_">syscall_enter_from_user_mode</span><span class="params">(<span class="keyword">struct</span> pt_regs *regs, <span class="type">long</span> syscall)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">long</span> ret;</span><br><span class="line"></span><br><span class="line">	enter_from_user_mode(regs);</span><br><span class="line"></span><br><span class="line">	instrumentation_begin();</span><br><span class="line">	local_irq_enable();</span><br><span class="line">	ret = syscall_enter_from_user_mode_work(regs, syscall);</span><br><span class="line">	instrumentation_end();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>继续跟syscall_enter_from_user_mode_work，可以看到，只有在SYSCALL_WORK_ENTER这个标志位开始后，才能进入trace流程</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * syscall_enter_from_user_mode_work - Check and handle work before invoking</span></span><br><span class="line"><span class="comment"> *				       a syscall</span></span><br><span class="line"><span class="comment"> * @regs:	Pointer to currents pt_regs</span></span><br><span class="line"><span class="comment"> * @syscall:	The syscall number</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Invoked from architecture specific syscall entry code with interrupts</span></span><br><span class="line"><span class="comment"> * enabled after invoking enter_from_user_mode(), enabling interrupts and</span></span><br><span class="line"><span class="comment"> * extra architecture specific work.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Returns: The original or a modified syscall number</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * If the returned syscall number is -1 then the syscall should be</span></span><br><span class="line"><span class="comment"> * skipped. In this case the caller may invoke syscall_set_error() or</span></span><br><span class="line"><span class="comment"> * syscall_set_return_value() first.  If neither of those are called and -1</span></span><br><span class="line"><span class="comment"> * is returned, then the syscall will fail with ENOSYS.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * It handles the following work items:</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *  1) syscall_work flag dependent invocations of</span></span><br><span class="line"><span class="comment"> *     ptrace_report_syscall_entry(), __secure_computing(), trace_sys_enter()</span></span><br><span class="line"><span class="comment"> *  2) Invocation of audit_syscall_entry()</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">static</span> __always_inline <span class="type">long</span> <span class="title function_">syscall_enter_from_user_mode_work</span><span class="params">(<span class="keyword">struct</span> pt_regs *regs, <span class="type">long</span> syscall)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> work = READ_ONCE(current_thread_info()-&gt;syscall_work);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (work &amp; SYSCALL_WORK_ENTER)</span><br><span class="line">		syscall = syscall_trace_enter(regs, work);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> syscall;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>再往syscall_trace_enter追</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> __always_inline <span class="type">long</span> <span class="title function_">syscall_trace_enter</span><span class="params">(<span class="keyword">struct</span> pt_regs *regs, <span class="type">unsigned</span> <span class="type">long</span> work)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">long</span> syscall, ret = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Handle Syscall User Dispatch.  This must comes first, since</span></span><br><span class="line"><span class="comment">	 * the ABI here can be something that doesn&#x27;t make sense for</span></span><br><span class="line"><span class="comment">	 * other syscall_work features.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">if</span> (work &amp; SYSCALL_WORK_SYSCALL_USER_DISPATCH) &#123;</span><br><span class="line">		<span class="keyword">if</span> (syscall_user_dispatch(regs))</span><br><span class="line">			<span class="keyword">return</span> <span class="number">-1L</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * User space got a time slice extension granted and relinquishes</span></span><br><span class="line"><span class="comment">	 * the CPU. The work stops the slice timer to avoid an extra round</span></span><br><span class="line"><span class="comment">	 * through hrtimer_interrupt().</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">if</span> (work &amp; SYSCALL_WORK_SYSCALL_RSEQ_SLICE)</span><br><span class="line">		rseq_syscall_enter_work(syscall_get_nr(current, regs));</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Handle ptrace */</span></span><br><span class="line">	<span class="keyword">if</span> (work &amp; (SYSCALL_WORK_SYSCALL_TRACE | SYSCALL_WORK_SYSCALL_EMU)) &#123;</span><br><span class="line">		ret = arch_ptrace_report_syscall_entry(regs);</span><br><span class="line">		<span class="keyword">if</span> (ret || (work &amp; SYSCALL_WORK_SYSCALL_EMU))</span><br><span class="line">			<span class="keyword">return</span> <span class="number">-1L</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Do seccomp after ptrace, to catch any tracer changes. */</span></span><br><span class="line">	<span class="keyword">if</span> (work &amp; SYSCALL_WORK_SECCOMP) &#123;</span><br><span class="line">		ret = __secure_computing();</span><br><span class="line">		<span class="keyword">if</span> (ret == <span class="number">-1L</span>)</span><br><span class="line">			<span class="keyword">return</span> ret;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Either of the above might have changed the syscall number */</span></span><br><span class="line">	syscall = syscall_get_nr(current, regs);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (unlikely(work &amp; SYSCALL_WORK_SYSCALL_TRACEPOINT))</span><br><span class="line">		syscall = trace_syscall_enter(regs, syscall);</span><br><span class="line"></span><br><span class="line">	syscall_enter_audit(regs, syscall);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> ret ? : syscall;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>那么在最后可以清楚地看到ebpf中TRACEPOINT的支持</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (unlikely(work &amp; SYSCALL_WORK_SYSCALL_TRACEPOINT))</span><br><span class="line">	syscall = trace_syscall_enter(regs, syscall);</span><br></pre></td></tr></table></figure></div>
+
+<p>也就是说其实其tracepoint优先级并不高，在他之前还有</p>
+<p><strong>User Dispatch</strong>：看看是不是用户态自己想搞模拟。</p>
+<p><strong>Ptrace</strong>：这是老牌调试器（如 GDB&#x2F;Strace）的领地。由于 Ptrace 可能会修改寄存器甚至系统调用号，所以它必须排在前面。</p>
+<p><strong>Seccomp</strong>：这是内核的“安全沙箱”。它要根据 Ptrace 修改后的系统调用号来决定：这个操作允许吗？要不要杀掉进程？</p>
+<p>进行看 trace_syscall_enter，这里可以明确地看到，是bpf的挂载点，也就是经典的sys_enter和sys_exit</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SPDX-License-Identifier: GPL-2.0</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/entry-common.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CREATE_TRACE_POINTS</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;trace/events/syscalls.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Out of line to prevent tracepoint code duplication */</span></span><br><span class="line"></span><br><span class="line"><span class="type">long</span> <span class="title function_">trace_syscall_enter</span><span class="params">(<span class="keyword">struct</span> pt_regs *regs, <span class="type">long</span> syscall)</span></span><br><span class="line">&#123;</span><br><span class="line">	trace_sys_enter(regs, syscall);</span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Probes or BPF hooks in the tracepoint may have changed the</span></span><br><span class="line"><span class="comment">	 * system call number. Reread it.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">return</span> syscall_get_nr(current, regs);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">trace_syscall_exit</span><span class="params">(<span class="keyword">struct</span> pt_regs *regs, <span class="type">long</span> ret)</span></span><br><span class="line">&#123;</span><br><span class="line">	trace_sys_exit(regs, ret);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>trace_sys_enter和trace_sys_exit定义如下，可以看到大部分还是完成了传参的工作，那么真正执行我们ebpf模块，也就是应该有个回调函数调用的地方，应该在哪里呢。</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line">/* SPDX-License-Identifier: GPL-2.0 */</span><br><span class="line">#undef TRACE_SYSTEM</span><br><span class="line">#define TRACE_SYSTEM raw_syscalls</span><br><span class="line">#undef TRACE_INCLUDE_FILE</span><br><span class="line">#define TRACE_INCLUDE_FILE syscalls</span><br><span class="line"></span><br><span class="line">#if !defined(_TRACE_EVENTS_SYSCALLS_H) || defined(TRACE_HEADER_MULTI_READ)</span><br><span class="line">#define _TRACE_EVENTS_SYSCALLS_H</span><br><span class="line"></span><br><span class="line">#include &lt;linux/tracepoint.h&gt;</span><br><span class="line"></span><br><span class="line">#include &lt;asm/ptrace.h&gt;</span><br><span class="line">#include &lt;asm/syscall.h&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS</span><br><span class="line"></span><br><span class="line">TRACE_EVENT_SYSCALL(sys_enter,</span><br><span class="line"></span><br><span class="line">	TP_PROTO(struct pt_regs *regs, long id),</span><br><span class="line"></span><br><span class="line">	TP_ARGS(regs, id),</span><br><span class="line"></span><br><span class="line">	TP_STRUCT__entry(</span><br><span class="line">		__field(	long,		id		)</span><br><span class="line">		__array(	unsigned long,	args,	6	)</span><br><span class="line">	),</span><br><span class="line"></span><br><span class="line">	TP_fast_assign(</span><br><span class="line">		__entry-&gt;id	= id;</span><br><span class="line">		syscall_get_arguments(current, regs, __entry-&gt;args);</span><br><span class="line">	),</span><br><span class="line"></span><br><span class="line">	TP_printk(&quot;NR %ld (%lx, %lx, %lx, %lx, %lx, %lx)&quot;,</span><br><span class="line">		  __entry-&gt;id,</span><br><span class="line">		  __entry-&gt;args[0], __entry-&gt;args[1], __entry-&gt;args[2],</span><br><span class="line">		  __entry-&gt;args[3], __entry-&gt;args[4], __entry-&gt;args[5]),</span><br><span class="line"></span><br><span class="line">	syscall_regfunc, syscall_unregfunc</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line">TRACE_EVENT_FLAGS(sys_enter, TRACE_EVENT_FL_CAP_ANY)</span><br><span class="line"></span><br><span class="line">TRACE_EVENT_SYSCALL(sys_exit,</span><br><span class="line"></span><br><span class="line">	TP_PROTO(struct pt_regs *regs, long ret),</span><br><span class="line"></span><br><span class="line">	TP_ARGS(regs, ret),</span><br><span class="line"></span><br><span class="line">	TP_STRUCT__entry(</span><br><span class="line">		__field(	long,	id	)</span><br><span class="line">		__field(	long,	ret	)</span><br><span class="line">	),</span><br><span class="line"></span><br><span class="line">	TP_fast_assign(</span><br><span class="line">		__entry-&gt;id	= syscall_get_nr(current, regs);</span><br><span class="line">		__entry-&gt;ret	= ret;</span><br><span class="line">	),</span><br><span class="line"></span><br><span class="line">	TP_printk(&quot;NR %ld = %ld&quot;,</span><br><span class="line">		  __entry-&gt;id, __entry-&gt;ret),</span><br><span class="line"></span><br><span class="line">	syscall_regfunc, syscall_unregfunc</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line">TRACE_EVENT_FLAGS(sys_exit, TRACE_EVENT_FL_CAP_ANY)</span><br><span class="line"></span><br><span class="line">#endif /* CONFIG_HAVE_SYSCALL_TRACEPOINTS */</span><br><span class="line"></span><br><span class="line">#endif /* _TRACE_EVENTS_SYSCALLS_H */</span><br><span class="line"></span><br><span class="line">/* This part must be outside protection */</span><br><span class="line">#include &lt;trace/define_trace.h&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure></div>
+
+<p>翻了很久终于找到了TRACE_EVENT_SYSCALL的最底宏定义，前面基本都是一些别名封装</p>
+<p>__DO_TRACE_CALL即为真正执行tracepoint的地方。</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">#define <span class="title function_">__DECLARE_TRACE_SYSCALL</span><span class="params">(name, proto, args, data_proto)</span>		\</span><br><span class="line">	__DECLARE_TRACE_COMMON(name, PARAMS(proto), PARAMS(args), PARAMS(data_proto)) \</span><br><span class="line">	<span class="keyword">static</span> inline <span class="keyword">void</span> __do_trace_##name(proto)			\</span><br><span class="line">	&#123;								\</span><br><span class="line">		TRACEPOINT_CHECK(name)					\</span><br><span class="line">		guard(rcu_tasks_trace)();				\</span><br><span class="line">		__DO_TRACE_CALL(name, TP_ARGS(args));			\</span><br><span class="line">	&#125;								\</span><br><span class="line">	<span class="keyword">static</span> inline <span class="keyword">void</span> trace_##name(proto)				\</span><br><span class="line">	&#123;								\</span><br><span class="line">		might_fault();						\</span><br><span class="line">		<span class="keyword">if</span> (static_branch_unlikely(&amp;__tracepoint_##name.key))	\</span><br><span class="line">			__do_trace_##name(args);			\</span><br><span class="line">		<span class="keyword">if</span> (IS_ENABLED(CONFIG_LOCKDEP)) &#123;			\</span><br><span class="line">			WARN_ONCE(!rcu_is_watching(),			\</span><br><span class="line">				  <span class="string">&quot;RCU not watching for tracepoint&quot;</span>);	\</span><br><span class="line">		&#125;							\</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>static_call(tp_func_##name)，即最终执行了tracepoint的回调函数</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Individual subsystem my have a separate configuration to</span></span><br><span class="line"><span class="comment"> * enable their tracepoints. By default, this file will create</span></span><br><span class="line"><span class="comment"> * the tracepoints if CONFIG_TRACEPOINTS is defined. If a subsystem</span></span><br><span class="line"><span class="comment"> * wants to be able to disable its tracepoints from being created</span></span><br><span class="line"><span class="comment"> * it can define NOTRACE before including the tracepoint headers.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">#<span class="keyword">if</span> <span class="title function_">defined</span><span class="params">(CONFIG_TRACEPOINTS)</span> &amp;&amp; !defined(NOTRACE)</span><br><span class="line">#define TRACEPOINTS_ENABLED</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">#ifdef TRACEPOINTS_ENABLED</span><br><span class="line"></span><br><span class="line">#ifdef CONFIG_HAVE_STATIC_CALL</span><br><span class="line">#define <span class="title function_">__DO_TRACE_CALL</span><span class="params">(name, args)</span>					\</span><br><span class="line">	<span class="keyword">do</span> &#123;								\</span><br><span class="line">		struct tracepoint_func *it_func_ptr;			\</span><br><span class="line">		<span class="keyword">void</span> *__data;						\</span><br><span class="line">		it_func_ptr =						\</span><br><span class="line">			rcu_dereference_raw((&amp;__tracepoint_##name)-&gt;funcs); \</span><br><span class="line">		<span class="keyword">if</span> (it_func_ptr) &#123;					\</span><br><span class="line">			__data = (it_func_ptr)-&gt;data;			\</span><br><span class="line">			static_call(tp_func_##name)(__data, args);	\</span><br><span class="line">		&#125;							\</span><br><span class="line">	&#125; <span class="keyword">while</span> (<span class="number">0</span>)</span><br><span class="line">#<span class="keyword">else</span></span><br><span class="line">#define <span class="title function_">__DO_TRACE_CALL</span><span class="params">(name, args)</span>	__traceiter_##name(NULL, args)</span><br><span class="line">#endif <span class="comment">/* CONFIG_HAVE_STATIC_CALL */</span></span><br></pre></td></tr></table></figure></div>
+
+<p>这里特别还注意，trace_##name中在do_trace还进行了一次static_branch_unlikely操作，这个if不是一个简单的判断。它是 Linux 内核的 Static Keys（Jump Labels）机制</p>
+<p>当没有ebpf事件挂载时，这条if对应的机器码就是一个NOP，不会跳转到_<em>do_trace</em>##name。</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">... (前面的系统调用逻辑)</span><br><span class="line">    NOP  (占 5 个字节)</span><br><span class="line">... (后面的系统调用逻辑)</span><br></pre></td></tr></table></figure></div>
+
+<p>而当存在时，其实判断已经发生了，这里会直接生成一条JMP指令，直接到_<em>do_trace</em>##name。</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">... (前面的系统调用逻辑)</span><br><span class="line">    JMP do_trace  (被篡改后的 5 字节)</span><br><span class="line">... (后面的系统调用逻辑)</span><br></pre></td></tr></table></figure></div>
+
+<p>那为什么需要这种static keys的机制呢，因为现代CPU都拥有很高的流水线，CPU会进行分支预测，假如这里的ebpf状态发生了变化，那么后面实际的执行将发生很大变动，将惩罚多个CPU周期</p>
+<p>对于系统调用（比如 read、write）这种每秒被调用成千上万次的基础设施，每次都去读内存、比较、做分支预测，累加起来的性能损耗是极其可观的。</p>
+<blockquote>
+<p><strong>为什么 NOP 是零损耗？</strong> 虽然 NOP 也是指令，但在现代超标量 CPU 中，译码器（Decoder）看到 NOP 后，往往会直接把它丢弃，根本不会把它送进后续的执行单元（Execution Unit）。它在流水线中的消耗几乎被完全抹平，等于 0 个周期</p>
+</blockquote>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> ebpf学习-从linux内核源码开始</li>
+        <li><strong>作者:</strong> 两只羊</li>
+        <li><strong>创建于
+                :</strong> 2026-05-09 09:35:43</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2026-05-09 17:37:01
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://twogoat.github.io/2026/05/09/ebpf学习-认识ebpf/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Reverse/">#Reverse</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E7%A0%94%E7%A9%B6/">#研究</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="prev" rel="prev" href="/2026/05/09/ebpf%E5%AD%A6%E4%B9%A0-ebpf%E7%AE%80%E5%8D%95%E6%A8%A1%E5%9D%97%E7%BC%96%E5%86%99/">
+					<span class="left arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-left"></i>
+					</span>
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">ebpf学习-ebpf简单模块编写</span>
+						<span class="post-nav-item">上一篇</span>
+					</span>
+				</a>
+			</div>
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2026/05/06/%E5%AE%89%E5%8D%93%E7%AB%AF%E6%80%BB%E7%BB%93%E7%9B%91%E6%B5%8B%E6%80%BB%E7%BB%93/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">安卓端总结监测总结</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.mjs';
+
+      function loadWaline() {
+        init({
+          el: '#waline',
+          serverURL: 'https://example.example.com',
+          lang: 'zh-CN',
+          dark: 'body[class~="dark-mode"]',
+          reaction: false,
+          requiredMeta: ['nick', 'mail'],
+          emoji: [],
+          recaptchaV3Key: "wasd",
+          
+        });
+      }
+
+      if (typeof swup !== 'undefined') {
+        loadWaline();
+      } else {
+        window.addEventListener('DOMContentLoaded', loadWaline);
+      }
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">ebpf学习-从linux内核源码开始</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFebpf"><span class="nav-text">什么是ebpf</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#syscall%E5%8E%9F%E7%90%86%E5%AD%A6%E4%B9%A0-tracepoint%E6%8C%82%E8%BD%BD%E7%82%B9%E5%8E%9F%E7%90%86"><span class="nav-text">syscall原理学习&#x2F;tracepoint挂载点原理</span></a></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">两只羊</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 30 篇文章
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.8.2</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container">
+	<img src="">
+</div>
+
+	
+
+</main>
+
+
+
+<script src="/js/build/libs/Swup.min.js"></script>
+
+<script src="/js/build/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/build/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupScrollPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupPreloadPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+</script>
+
+
+
+
+	
+<script src="/js/build/tools/imageViewer.js" type="module"></script>
+
+<script src="/js/build/utils.js" type="module"></script>
+
+<script src="/js/build/main.js" type="module"></script>
+
+<script src="/js/build/layouts/navbarShrink.js" type="module"></script>
+
+<script src="/js/build/tools/scrollTopBottom.js" type="module"></script>
+
+<script src="/js/build/tools/lightDarkSwitch.js" type="module"></script>
+
+<script src="/js/build/layouts/categoryList.js" type="module"></script>
+
+
+
+
+
+    
+<script src="/js/build/tools/codeBlock.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/layouts/lazyload.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/tools/runtime.js"></script>
+
+    
+<script src="/js/build/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/build/libs/Typed.min.js"></script>
+
+  
+<script src="/js/build/plugins/typed.js" type="module"></script>
+
+
+
+
+
+
+
+
+
+
+
+    
+<script src="/js/build/tools/tocToggle.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/layouts/toc.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/plugins/tabs.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+<script src="/js/build/libs/moment-with-locales.min.js" data-swup-reload-script=""></script>
+
+
+<script src="/js/build/layouts/essays.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+
+	
+</body>
+
+</html>

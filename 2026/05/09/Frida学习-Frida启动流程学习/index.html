@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="两只羊">
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="https://twogoat.github.io/2026/05/09/frida学习-frida启动流程学习/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+    
+        
+        <meta name="description" content="test App启动流程总所周知呢，我们在使用frida hook的时候，要么是通过attach，要么是通过spawn模式启动 attach好理解，通过pid去ptrace attach，然后注入so就好了，但问题就在这个spawn模式 他到底是如何通过这样一条指令，去完整启动app的工作的呢 1frida -U -f &quot;com.test.example&quot; -l hook.js">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Frida学习-Frida spwn模式启动APP流程学习">
+<meta property="og:url" content="https://twogoat.github.io/2026/05/09/Frida%E5%AD%A6%E4%B9%A0-Frida%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%AD%A6%E4%B9%A0/index.html">
+<meta property="og:site_name" content="twogoatの小站">
+<meta property="og:description" content="test App启动流程总所周知呢，我们在使用frida hook的时候，要么是通过attach，要么是通过spawn模式启动 attach好理解，通过pid去ptrace attach，然后注入so就好了，但问题就在这个spawn模式 他到底是如何通过这样一条指令，去完整启动app的工作的呢 1frida -U -f &quot;com.test.example&quot; -l hook.js">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-09T15:11:50.000Z">
+<meta property="article:modified_time" content="2026-05-11T07:53:20.163Z">
+<meta property="article:author" content="twogoat&#x2F;showmaker">
+<meta property="article:tag" content="Reverse">
+<meta property="article:tag" content="研究">
+<meta name="twitter:card" content="summary">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/redefine-favicon.svg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/redefine-favicon.svg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/redefine-favicon.svg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            Frida学习-Frida spwn模式启动APP流程学习 | twogoat/showmakerの小站
+        
+    </title>
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        
+<link rel="stylesheet" href="/css/build/tailwind.css">
+
+    
+
+    
+<link rel="stylesheet" href="/fonts/GeistMono/geist-mono.css">
+
+    
+<link rel="stylesheet" href="/fonts/Geist/geist.css">
+
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+        
+<script src="/js/build/libs/anime.min.js"></script>
+
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"twogoat.github.io","root":"/","language":"zh-CN"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"5rem","h2":"4rem","h3":"2.8rem","h4":"2.5rem","h5":"2.2rem","h6":"2rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":false,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":true,"open_graph":true,"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/2.png","dark":"/images/2.png"},"title":"twogoat的妙妙屋","subtitle":{"text":["随心所欲地享受每一天\\(￣︶￣*\\))","随时随地，浏览记录O(∩_∩)O","欢迎来到我的博客(｡･∀･)ﾉﾞ","正在努力更新博客(ง •_•)ง"],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":false,"style":"default","links":{"github":null,"instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"9.3.0"}},"version":"2.8.2","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"icon":"fa-solid fa-tags","path":"/tags"},"About Me":{"icon":"fa-regular fa-link","path":"/about"},"Links":{"icon":"fa-regular fa-link","path":"/links"}},"search":{"enable":false,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":null,"show_on_mobile":true,"links":null},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    window.lang_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+
+<body>
+	<div class="progress-bar-container">
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
+
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
+
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
+
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
+
+<div class="preloader">
+    <h2 class="ml13">
+        twogoat/showmakerの小站
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
+
+        // Clear the existing content
+        textWrapper.innerHTML = '';
+
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
+
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
+
+
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
+
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
+
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
+
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                twogoat/showmakerの小站
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/archives"
+                                        >
+                                    <i class="fa-regular fa-archive fa-fw"></i>
+                                    归档
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/tags"
+                                        >
+                                    <i class="fa-solid fa-tags fa-fw"></i>
+                                    标签
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/about"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    ABOUT ME
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/links"
+                                        >
+                                    <i class="fa-regular fa-link fa-fw"></i>
+                                    链接
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/archives"
+                        >
+                            <span>
+                                归档
+                            </span>
+                            
+                                <i class="fa-regular fa-archive fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/tags"
+                        >
+                            <span>
+                                标签
+                            </span>
+                            
+                                <i class="fa-solid fa-tags fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/about"
+                        >
+                            <span>
+                                ABOUT ME
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/links"
+                        >
+                            <span>
+                                链接
+                            </span>
+                            
+                                <i class="fa-regular fa-link fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">7</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">0</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">30</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">Frida学习-Frida spwn模式启动APP流程学习</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] flex-shrink-0 rounded-medium border border-border-color p-[1px]">
+				<img src="https://avatars.githubusercontent.com/u/173450716?s=400&u=ccae31065054a3a4bf4d8766ed7d532442c26449&v=4">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">两只羊</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv3</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2026-05-09 23:11:50</span>
+        <span class="mobile">2026-05-09 23:11:50</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-05-11 15:53:20</span>
+            <span class="mobile">2026-05-11 15:53:20</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/Reverse/">Reverse</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E7%A0%94%E7%A9%B6/">研究</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<p>test</p>
+<h2 id="App启动流程"><a href="#App启动流程" class="headerlink" title="App启动流程"></a>App启动流程</h2><p>总所周知呢，我们在使用frida hook的时候，要么是通过attach，要么是通过spawn模式启动</p>
+<p>attach好理解，通过pid去ptrace attach，然后注入so就好了，但问题就在这个spawn模式</p>
+<p>他到底是如何通过这样一条指令，去完整启动app的工作的呢</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">frida -U -f &quot;com.test.example&quot; -l hook.js</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p><strong>Launcher -&gt; AMS</strong></p>
+<p>让我们先来学习一下APP的启动流程</p>
+<p>点击了桌面上的应用图标后，会Launcher程序便启动了，通过binder向系统服务system_server发送请求</p>
+<p>然后是ActivityManagerService (AMS)，收到请求后检查目标应用是否已经运行，然后开始准备创建新进程</p>
+<p><strong>AMS -&gt; Zygote</strong></p>
+<p>AMS向Zygote发送一个创建进程的请求，Zygote即为安卓应用的孵化程序，它在系统启动时就加载了Java运行库，还有一些核心类和资源</p>
+<p>Zygote收到请求后，会调用fork创建新进程，可以说所有APP都是通过Zygote孵化过来的。</p>
+<p><strong>Zygote -&gt; App Process</strong></p>
+<p>通过fork创建出app的新进程后，会初始化Android Runtime(ART)，然后开始启动AcitvityThread。</p>
+<p><strong>AppProcess &lt;-&gt; AMS</strong></p>
+<p>进程已经创建了，但还需要通过binder告知AMS已经启动，通过调用attachApplication，已经bindApplication，发送相关配置信息</p>
+<p>最后进程依次通过attachBaseContext()启动，Application.onCreate进行全局初始化，再通过Acivity.onCreate创建UI线程，进行界面初始化之类的。</p>
+<h2 id="frida-spawn启动分析"><a href="#frida-spawn启动分析" class="headerlink" title="frida spawn启动分析"></a>frida spawn启动分析</h2><p>那么frida的spawn模式到底是如何完成从启动应用到注入的过程呢，接下来的分析以frida-16.2.1为例</p>
+<p>当通过普通的linux进程启动并注入时，其实原理就是exec，我之前写的调试器已经把原理略知一二了，但问题是我们注入的是一个包名，它到底是如何完成前面那么多的APP启动流程的</p>
+<p>我们直接定位到spawn的起点处</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> async uint <span class="title function_">spawn</span> <span class="params">(string program, HostSpawnOptions options, Cancellable? cancellable)</span> <span class="keyword">throws</span> Error, IOError &#123;</span><br><span class="line">	<span class="type">string</span> <span class="variable">package</span> <span class="operator">=</span> program;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (options.has_argv)</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>.NOT_SUPPORTED (<span class="string">&quot;The &#x27;argv&#x27; option is not supported when spawning Android apps&quot;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (options.has_envp)</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>.NOT_SUPPORTED (<span class="string">&quot;The &#x27;envp&#x27; option is not supported when spawning Android apps&quot;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (options.has_env)</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>.NOT_SUPPORTED (<span class="string">&quot;The &#x27;env&#x27; option is not supported when spawning Android apps&quot;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (options.cwd.length &gt; <span class="number">0</span>)</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>.NOT_SUPPORTED (<span class="string">&quot;The &#x27;cwd&#x27; option is not supported when spawning Android apps&quot;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (options.stdio != INHERIT)</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>.NOT_SUPPORTED (<span class="string">&quot;Redirected stdio is not supported when spawning Android apps&quot;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="type">var</span> <span class="variable">entrypoint</span> <span class="operator">=</span> PackageEntrypoint.parse (<span class="keyword">package</span>, options);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">yield</span> <span class="title function_">ensure_loaded</span> <span class="params">(cancellable)</span>;</span><br><span class="line"></span><br><span class="line">	<span class="type">var</span> <span class="variable">system_server_agent</span> <span class="operator">=</span> host_session.system_server_agent;</span><br><span class="line"></span><br><span class="line">	<span class="type">var</span> <span class="variable">process_name</span> <span class="operator">=</span> <span class="keyword">yield</span> system_server_agent.get_process_name (<span class="keyword">package</span>, entrypoint.uid, cancellable);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (spawn_requests.has_key (process_name))</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>.INVALID_OPERATION (<span class="string">&quot;Spawn already in progress for the specified package name&quot;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="type">var</span> <span class="variable">request</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Promise</span>&lt;uint&gt; ();</span><br><span class="line">	spawn_requests[process_name] = request;</span><br><span class="line"></span><br><span class="line">	<span class="type">uint</span> <span class="variable">pid</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">try</span> &#123;</span><br><span class="line">		<span class="keyword">yield</span> system_server_agent.stop_package (<span class="keyword">package</span>, entrypoint.uid, cancellable);</span><br><span class="line">		<span class="keyword">yield</span> system_server_agent.start_package (<span class="keyword">package</span>, entrypoint, cancellable);</span><br><span class="line"></span><br><span class="line">		<span class="type">var</span> <span class="variable">timeout</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">TimeoutSource</span>.seconds (<span class="number">20</span>);</span><br><span class="line">		timeout.set_callback (() =&gt; &#123;</span><br><span class="line">			request.reject (<span class="keyword">new</span> <span class="title class_">Error</span>.TIMED_OUT (<span class="string">&quot;Unexpectedly timed out while waiting for app to launch&quot;</span>));</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">		&#125;);</span><br><span class="line">		timeout.attach (MainContext.get_thread_default ());</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			pid = <span class="keyword">yield</span> request.future.wait_async (cancellable);</span><br><span class="line">		&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">			timeout.destroy ();</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">catch</span> (GLib.Error e) &#123;</span><br><span class="line">		<span class="keyword">if</span> (!spawn_requests.unset (process_name)) &#123;</span><br><span class="line">			<span class="type">var</span> <span class="variable">pending_pid</span> <span class="operator">=</span> request.future.value;</span><br><span class="line">			<span class="keyword">if</span> (pending_pid != <span class="number">0</span>)</span><br><span class="line">				host_session.resume.begin (pending_pid, io_cancellable);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		throw_api_error (e);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> pid;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>这里关键的就是ensure_loaded这个函数，可以看到它枚举了zygote64等信息，那么可以大概猜测，它可能通过劫持了zygote，进行了一系列的工作。</p>
+<p>在找到对应的进程后，通过do_inject_zygote_agent进行了注入</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> async <span class="keyword">void</span> <span class="title function_">ensure_loaded</span> <span class="params">(Cancellable? cancellable)</span> <span class="keyword">throws</span> Error, IOError &#123;</span><br><span class="line">			<span class="keyword">while</span> (ensure_request != <span class="literal">null</span>) &#123;</span><br><span class="line">				<span class="keyword">try</span> &#123;</span><br><span class="line">					<span class="keyword">yield</span> ensure_request.future.wait_async (cancellable);</span><br><span class="line">					<span class="keyword">return</span>;</span><br><span class="line">				&#125; <span class="keyword">catch</span> (Error e) &#123;</span><br><span class="line">					<span class="keyword">throw</span> e;</span><br><span class="line">				&#125; <span class="keyword">catch</span> (IOError e) &#123;</span><br><span class="line">					cancellable.set_error_if_cancelled ();</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			ensure_request = <span class="keyword">new</span> <span class="title class_">Promise</span>&lt;bool&gt; ();</span><br><span class="line"></span><br><span class="line">			<span class="type">uint</span> <span class="variable">pending</span> <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line">			GLib.Error? first_error = <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">			<span class="type">CompletionNotify</span> <span class="variable">on_complete</span> <span class="operator">=</span> error =&gt; &#123;</span><br><span class="line">				pending--;</span><br><span class="line">				<span class="keyword">if</span> (error != <span class="literal">null</span> &amp;&amp; first_error == <span class="literal">null</span>)</span><br><span class="line">					first_error = error;</span><br><span class="line"></span><br><span class="line">				<span class="keyword">if</span> (pending == <span class="number">0</span>) &#123;</span><br><span class="line">					<span class="type">var</span> <span class="variable">source</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">IdleSource</span> ();</span><br><span class="line">					source.set_callback (ensure_loaded.callback);</span><br><span class="line">					source.attach (MainContext.get_thread_default ());</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;;</span><br><span class="line"></span><br><span class="line">			foreach (HostProcessInfo info in System.enumerate_processes (<span class="keyword">new</span> <span class="title class_">ProcessQueryOptions</span> ())) &#123;</span><br><span class="line">				<span class="type">var</span> <span class="variable">name</span> <span class="operator">=</span> info.name;</span><br><span class="line">				<span class="keyword">if</span> (name == <span class="string">&quot;zygote&quot;</span> || name == <span class="string">&quot;zygote64&quot;</span> || name == <span class="string">&quot;usap32&quot;</span> || name == <span class="string">&quot;usap64&quot;</span>) &#123;</span><br><span class="line">					<span class="type">uint</span> <span class="variable">pid</span> <span class="operator">=</span> info.pid;</span><br><span class="line">					<span class="keyword">if</span> (zygote_agents.has_key (pid))</span><br><span class="line">						<span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">					pending++;</span><br><span class="line">					do_inject_zygote_agent.begin (pid, name, cancellable, on_complete);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			on_complete (<span class="literal">null</span>);</span><br><span class="line"></span><br><span class="line">			<span class="keyword">yield</span>;</span><br><span class="line"></span><br><span class="line">			on_complete = <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">			<span class="keyword">if</span> (first_error == <span class="literal">null</span>) &#123;</span><br><span class="line">				ensure_request.resolve (<span class="literal">true</span>);</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				ensure_request.reject (first_error);</span><br><span class="line">				ensure_request = <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">				throw_api_error (first_error);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>那么这个ZygoteAgent是什么呢，再来看看它的定义</p>
+<p>这里通过session.enable_child_gating，启动了一个child_gating</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">class</span> <span class="title class_">ZygoteAgent</span> : InternalAgent &#123;</span><br><span class="line">		<span class="keyword">public</span> uint pid &#123;</span><br><span class="line">			get;</span><br><span class="line">			construct;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">public</span> string name &#123;</span><br><span class="line">			get;</span><br><span class="line">			construct;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">public</span> bool child_gating_only_used_by_us &#123;</span><br><span class="line">			get;</span><br><span class="line">			set;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">public</span> <span class="title function_">ZygoteAgent</span> <span class="params">(LinuxHostSession host_session, uint pid, string name)</span> &#123;</span><br><span class="line">			Object (</span><br><span class="line">				host_session: host_session,</span><br><span class="line">				pid: pid,</span><br><span class="line">				name: name</span><br><span class="line">			);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">public</span> async <span class="keyword">void</span> <span class="title function_">load</span> <span class="params">(Cancellable? cancellable)</span> <span class="keyword">throws</span> Error, IOError &#123;</span><br><span class="line">#<span class="keyword">if</span> ARM || ARM64</span><br><span class="line">			<span class="type">LinuxHelper</span> <span class="variable">helper</span> <span class="operator">=</span> ((LinuxHostSession) host_session).helper;</span><br><span class="line">			<span class="keyword">yield</span> helper.await_syscall (pid, POLL_LIKE, cancellable);</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">#endif</span><br><span class="line">				<span class="keyword">yield</span> <span class="title function_">ensure_loaded</span> <span class="params">(cancellable)</span>;</span><br><span class="line"></span><br><span class="line">				<span class="keyword">try</span> &#123;</span><br><span class="line">					<span class="keyword">yield</span> session.enable_child_gating (cancellable);</span><br><span class="line">				&#125; <span class="keyword">catch</span> (GLib.Error e) &#123;</span><br><span class="line">					throw_dbus_error (e);</span><br><span class="line">				&#125;</span><br><span class="line">#<span class="keyword">if</span> ARM || ARM64</span><br><span class="line">			&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">				helper.resume_syscall.begin (pid, <span class="literal">null</span>);</span><br><span class="line">			&#125;</span><br><span class="line">#endif</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">protected</span> override async uint <span class="title function_">get_target_pid</span> <span class="params">(Cancellable? cancellable)</span> <span class="keyword">throws</span> Error, IOError &#123;</span><br><span class="line">			<span class="keyword">return</span> pid;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">protected</span> override async string? load_source (Cancellable? cancellable) <span class="keyword">throws</span> Error, IOError &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>agent 里真正负责捕获 fork&#x2F;specialize 的是 ForkMonitor。Android 下它会检测自己是不是 &#x2F;system&#x2F;bin&#x2F;app_process 且 cmdline 是 zygote&#x2F;zygote64&#x2F;usap32&#x2F;usap64，然后 hook：fork，vforkandroid_os_Process_setArgV0，selinux_android_setcontext</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">	<span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ForkMonitor</span> : Object, Gum.InvocationListener &#123;</span><br><span class="line">		<span class="keyword">public</span> weak ForkHandler handler &#123;</span><br><span class="line">			get;</span><br><span class="line">			construct;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">private</span> <span class="type">State</span> <span class="variable">state</span> <span class="operator">=</span> IDLE;</span><br><span class="line">		<span class="keyword">private</span> <span class="type">ChildRecoveryBehavior</span> <span class="variable">child_recovery_behavior</span> <span class="operator">=</span> NORMAL;</span><br><span class="line">		<span class="keyword">private</span> string? identifier;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> * fork_impl;</span><br><span class="line">		<span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> * vfork_impl;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">private</span> <span class="keyword">enum</span> <span class="title class_">State</span> &#123;</span><br><span class="line">			IDLE,</span><br><span class="line">			FORKING,</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">private</span> <span class="keyword">enum</span> <span class="title class_">ChildRecoveryBehavior</span> &#123;</span><br><span class="line">			NORMAL,</span><br><span class="line">			DEFERRED_UNTIL_SET_ARGV0</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">private</span> <span class="keyword">enum</span> <span class="title class_">HookId</span> &#123;</span><br><span class="line">			FORK,</span><br><span class="line">			SET_ARGV0,</span><br><span class="line">			SET_CTX</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">public</span> <span class="title function_">ForkMonitor</span> <span class="params">(ForkHandler handler)</span> &#123;</span><br><span class="line">			Object (handler: handler);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">static</span> construct &#123;</span><br><span class="line">			unowned <span class="type">string</span> <span class="variable">libc</span> <span class="operator">=</span> Gum.Process.query_libc_name ();</span><br><span class="line">			fork_impl = Gum.Module.find_export_by_name (libc, <span class="string">&quot;fork&quot;</span>);</span><br><span class="line">			vfork_impl = Gum.Module.find_export_by_name (libc, <span class="string">&quot;vfork&quot;</span>);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		construct &#123;</span><br><span class="line">			<span class="type">var</span> <span class="variable">interceptor</span> <span class="operator">=</span> Gum.Interceptor.obtain ();</span><br><span class="line"></span><br><span class="line">			unowned Gum.<span class="type">InvocationListener</span> <span class="variable">listener</span> <span class="operator">=</span> <span class="built_in">this</span>;</span><br><span class="line"></span><br><span class="line">#<span class="keyword">if</span> ANDROID</span><br><span class="line">			<span class="title function_">if</span> <span class="params">(get_executable_path ()</span>.has_prefix (<span class="string">&quot;/system/bin/app_process&quot;</span>)) &#123;</span><br><span class="line">				<span class="keyword">try</span> &#123;</span><br><span class="line">					string cmdline;</span><br><span class="line">					FileUtils.get_contents (<span class="string">&quot;/proc/self/cmdline&quot;</span>, out cmdline);</span><br><span class="line">					<span class="keyword">if</span> (cmdline == <span class="string">&quot;zygote&quot;</span> || cmdline == <span class="string">&quot;zygote64&quot;</span> || cmdline == <span class="string">&quot;usap32&quot;</span> || cmdline == <span class="string">&quot;usap64&quot;</span>) &#123;</span><br><span class="line">						<span class="type">var</span> <span class="variable">set_argv0</span> <span class="operator">=</span> Gum.Module.find_export_by_name (<span class="string">&quot;libandroid_runtime.so&quot;</span>, <span class="string">&quot;_Z27android_os_Process_setArgV0P7_JNIEnvP8_jobjectP8_jstring&quot;</span>);</span><br><span class="line">						<span class="keyword">if</span> (set_argv0 != <span class="literal">null</span>) &#123;</span><br><span class="line">							interceptor.attach (set_argv0, listener, (<span class="keyword">void</span> *) HookId.SET_ARGV0);</span><br><span class="line">							child_recovery_behavior = DEFERRED_UNTIL_SET_ARGV0;</span><br><span class="line">						&#125;</span><br><span class="line"></span><br><span class="line">						<span class="type">var</span> <span class="variable">setcontext</span> <span class="operator">=</span> Gum.Module.find_export_by_name (<span class="string">&quot;libselinux.so&quot;</span>, <span class="string">&quot;selinux_android_setcontext&quot;</span>);</span><br><span class="line">						<span class="keyword">if</span> (setcontext != <span class="literal">null</span>)</span><br><span class="line">							interceptor.attach (setcontext, listener, (<span class="keyword">void</span> *) HookId.SET_CTX);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125; <span class="keyword">catch</span> (FileError e) &#123;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">			interceptor.attach (fork_impl, listener, (<span class="keyword">void</span> *) HookId.FORK);</span><br><span class="line">			interceptor.replace (vfork_impl, fork_impl);</span><br><span class="line">		&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>其中 setArgV0 和 selinux_android_setcontext 用来拿到 App 的进程名</p>
+<div class="code-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">on_set_argv0_enter</span> <span class="params">(Gum.InvocationContext context)</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> (identifier == <span class="literal">null</span>) &#123;</span><br><span class="line">		<span class="keyword">void</span> *** env = context.get_nth_argument (<span class="number">0</span>);</span><br><span class="line">		<span class="keyword">void</span> * name_obj = context.get_nth_argument (<span class="number">2</span>);</span><br><span class="line"></span><br><span class="line">		<span class="type">var</span> <span class="variable">env_vtable</span> <span class="operator">=</span> *env;</span><br><span class="line"></span><br><span class="line">		<span class="type">var</span> <span class="variable">get_string_utf_chars</span> <span class="operator">=</span> (GetStringUTFCharsFunc) env_vtable[<span class="number">169</span>];</span><br><span class="line">		<span class="type">var</span> <span class="variable">release_string_utf_chars</span> <span class="operator">=</span> (ReleaseStringUTFCharsFunc) env_vtable[<span class="number">170</span>];</span><br><span class="line"></span><br><span class="line">		<span class="type">var</span> <span class="variable">name_utf8</span> <span class="operator">=</span> get_string_utf_chars (env, name_obj);</span><br><span class="line"></span><br><span class="line">		identifier = name_utf8;</span><br><span class="line"></span><br><span class="line">		release_string_utf_chars (env, name_obj, name_utf8);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>我们再来回到spawn，在获取到system_server_agent后，会进行如下工作，对应下面这几行</p>
+<ol>
+<li>查询目标包默认进程名；</li>
+<li>forceStopPackage 停掉已有进程；</li>
+<li>调 startActivity 或 sendBroadcast 启动入口；</li>
+<li>等待 zygote 侧捕获到对应进程。</li>
+</ol>
+<div class="code-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> process_name = <span class="keyword">yield</span> system_server_agent.<span class="title function_">get_process_name</span>(...);</span><br><span class="line"></span><br><span class="line"><span class="keyword">yield</span> system_server_agent.<span class="title function_">stop_package</span>(...);</span><br><span class="line"><span class="keyword">yield</span> system_server_agent.<span class="title function_">start_package</span>(...);</span><br><span class="line"></span><br><span class="line">pid = <span class="keyword">yield</span> request.<span class="property">future</span>.<span class="title function_">wait_async</span>(...);</span><br><span class="line"></span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>start_package，就是进行了一个startActivity的调用</p>
+<div class="code-container" data-rel="Js"><figure class="iseeu highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">public <span class="keyword">async</span> <span class="keyword">void</span> <span class="title function_">start_package</span> (string package, <span class="title class_">PackageEntrypoint</span> entrypoint, <span class="title class_">Cancellable</span>? cancellable)</span><br><span class="line">		throws <span class="title class_">Error</span>, <span class="title class_">IOError</span> &#123;</span><br><span class="line">	<span class="keyword">var</span> package_node = <span class="keyword">new</span> <span class="title class_">Json</span>.<span class="property">Node</span>.<span class="property">alloc</span> ().<span class="property">init_string</span> (package);</span><br><span class="line">	<span class="keyword">var</span> uid_node = <span class="keyword">new</span> <span class="title class_">Json</span>.<span class="property">Node</span>.<span class="property">alloc</span> ().<span class="property">init_int</span> (entrypoint.<span class="property">uid</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (entrypoint is <span class="title class_">DefaultActivityEntrypoint</span>) &#123;</span><br><span class="line">		<span class="keyword">var</span> activity_node = <span class="keyword">new</span> <span class="title class_">Json</span>.<span class="property">Node</span>.<span class="property">alloc</span> ().<span class="property">init_null</span> ();</span><br><span class="line"></span><br><span class="line">		<span class="keyword">yield</span> <span class="title function_">call</span> (<span class="string">&quot;startActivity&quot;</span>, <span class="keyword">new</span> <span class="title class_">Json</span>.<span class="property">Node</span>[] &#123; package_node, activity_node, uid_node &#125;, cancellable);</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (entrypoint is <span class="title class_">ActivityEntrypoint</span>) &#123;</span><br><span class="line">		<span class="keyword">var</span> e = entrypoint <span class="keyword">as</span> <span class="title class_">ActivityEntrypoint</span>;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">var</span> activity_node = <span class="keyword">new</span> <span class="title class_">Json</span>.<span class="property">Node</span>.<span class="property">alloc</span> ().<span class="property">init_string</span> (e.<span class="property">activity</span>);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">yield</span> <span class="title function_">call</span> (<span class="string">&quot;startActivity&quot;</span>, <span class="keyword">new</span> <span class="title class_">Json</span>.<span class="property">Node</span>[] &#123; package_node, activity_node, uid_node &#125;, cancellable);</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (entrypoint is <span class="title class_">BroadcastReceiverEntrypoint</span>) &#123;</span><br><span class="line">		<span class="keyword">var</span> e = entrypoint <span class="keyword">as</span> <span class="title class_">BroadcastReceiverEntrypoint</span>;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">var</span> receiver_node = <span class="keyword">new</span> <span class="title class_">Json</span>.<span class="property">Node</span>.<span class="property">alloc</span> ().<span class="property">init_string</span> (e.<span class="property">receiver</span>);</span><br><span class="line">		<span class="keyword">var</span> action_node = <span class="keyword">new</span> <span class="title class_">Json</span>.<span class="property">Node</span>.<span class="property">alloc</span> ().<span class="property">init_string</span> (e.<span class="property">action</span>);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">yield</span> <span class="title function_">call</span> (<span class="string">&quot;sendBroadcast&quot;</span>, <span class="keyword">new</span> <span class="title class_">Json</span>.<span class="property">Node</span>[] &#123; package_node, receiver_node, action_node, uid_node &#125;,</span><br><span class="line">			cancellable);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="title function_">assert_not_reached</span> ();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>所以 Frida 的启动不是从 Launcher 图标点击开始，而是在 system_server 里模拟了一个“系统侧启动应用”的请求。后半段仍然是正常 Android 流程：AMS&#x2F;ATMS -&gt; Zygote -&gt; App Process。</p>
+<h2 id="启动流程总结"><a href="#启动流程总结" class="headerlink" title="启动流程总结"></a>启动流程总结</h2><p>Frida 把一个内部 agent 注入到 Android 的 system_server 进程里，<br>然后在 system_server 进程内部调用 Android Framework API。</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Frida -&gt; system_server 调 startActivity</span><br><span class="line">system_server/AMS -&gt; 发现需要新进程</span><br><span class="line">AMS -&gt; 请求 zygote 创建进程</span><br><span class="line">zygote -&gt; 按 Android 正常机制 fork</span><br><span class="line">Frida -&gt; 在 fork/specialize 过程中拦截并暂停新进程</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>那在hook拦截到fork后，到底发生了什么呢</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Zygote 按 Android 正常机制 fork/specialize App；</span><br><span class="line">Frida 的 ZygoteAgent 在 fork/specialize 边界识别新进程；</span><br><span class="line">App 子进程继承/重建 Frida agent；</span><br><span class="line">子进程向 frida-server 报到并阻塞等待；</span><br><span class="line">Frida attach + load hook.js；</span><br><span class="line">Frida resume，App 继续执行。</span><br></pre></td></tr></table></figure></div>
+
+
+
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">正常：</span><br><span class="line">Zygote fork</span><br><span class="line">  -&gt; App 子进程 specialize</span><br><span class="line">  -&gt; RuntimeInit / ZygoteInit</span><br><span class="line">  -&gt; ActivityThread.main()</span><br><span class="line">  -&gt; attachApplication()</span><br><span class="line">  -&gt; bindApplication()</span><br><span class="line">  -&gt; Application.attachBaseContext()</span><br><span class="line">  -&gt; Application.onCreate()</span><br><span class="line">  -&gt; Activity.onCreate()</span><br><span class="line"></span><br><span class="line">Frida spawn：</span><br><span class="line">Zygote fork</span><br><span class="line">  -&gt; App 子进程 specialize</span><br><span class="line">  -&gt; Frida 子进程 agent 报到</span><br><span class="line">  -&gt; App 暂停等待 resume</span><br><span class="line">  -&gt; frida-server <span class="title function_">attach</span><span class="params">(pid)</span></span><br><span class="line">  -&gt; 加载 hook.js</span><br><span class="line">  -&gt; Frida <span class="title function_">resume</span><span class="params">(pid)</span></span><br><span class="line">  -&gt; RuntimeInit / ZygoteInit 继续</span><br><span class="line">  -&gt; ActivityThread.<span class="title function_">main</span><span class="params">()</span></span><br><span class="line">  -&gt; <span class="title function_">attachApplication</span><span class="params">()</span></span><br><span class="line">  -&gt; <span class="title function_">bindApplication</span><span class="params">()</span></span><br><span class="line">  -&gt; Application.<span class="title function_">attachBaseContext</span><span class="params">()</span></span><br><span class="line">  -&gt; Application.<span class="title function_">onCreate</span><span class="params">()</span></span><br><span class="line">  -&gt; Activity.<span class="title function_">onCreate</span><span class="params">()</span></span><br><span class="line"></span><br></pre></td></tr></table></figure></div>
+
+
+
+<div class="code-container" data-rel="Python"><figure class="iseeu highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">正常启动：</span><br><span class="line">Launcher -&gt; AMS/ATMS -&gt; Zygote -&gt; App Process -&gt; ActivityThread -&gt; Application/Activity</span><br><span class="line"></span><br><span class="line">Frida spawn：</span><br><span class="line">Frida CLI -&gt; frida-server</span><br><span class="line">  -&gt; 预先注入 zygote/usap</span><br><span class="line">  -&gt; 注入 system_server 发起 startActivity</span><br><span class="line">  -&gt; AMS/ATMS -&gt; Zygote -&gt; App Process</span><br><span class="line">  -&gt; Frida 暂停新进程</span><br><span class="line">  -&gt; attach + load hook.js</span><br><span class="line">  -&gt; resume</span><br><span class="line">  -&gt; ActivityThread -&gt; Application/Activity</span><br></pre></td></tr></table></figure></div>
+
+
+
+<p>总结来说，Frida 跳过 Launcher，直接在 system_server 内调用 startActivity()，<br>让 AMS&#x2F;ATMS 正常走 App 启动流程。<br>同时 Frida 提前注入 zygote&#x2F;usap，监控 fork&#x2F;specialize。<br>当目标 App 子进程被 fork&#x2F;specialize 出来时，Frida 让它在早期阻塞等待。<br>随后 Frida CLI 对这个 pid 建立 session、加载 hook.js，再 resume。<br>之后流程基本和正常 App 启动一致。</p>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> Frida学习-Frida spwn模式启动APP流程学习</li>
+        <li><strong>作者:</strong> 两只羊</li>
+        <li><strong>创建于
+                :</strong> 2026-05-09 23:11:50</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2026-05-11 15:53:20
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://twogoat.github.io/2026/05/09/Frida学习-Frida启动流程学习/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Reverse/">#Reverse</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/%E7%A0%94%E7%A9%B6/">#研究</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="prev" rel="prev" href="/2026/05/09/android%E4%B8%8B%E7%9A%84%E5%A6%99%E5%A6%99so%E6%B3%A8%E5%85%A5%E6%96%B9%E6%B3%95%E6%80%BB%E7%BB%93/">
+					<span class="left arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-left"></i>
+					</span>
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">android下的妙妙so注入方法总结</span>
+						<span class="post-nav-item">上一篇</span>
+					</span>
+				</a>
+			</div>
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2026/05/09/ebpf%E5%AD%A6%E4%B9%A0-ebpf%E7%AE%80%E5%8D%95%E6%A8%A1%E5%9D%97%E7%BC%96%E5%86%99/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item">ebpf学习-ebpf简单模块编写</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.mjs';
+
+      function loadWaline() {
+        init({
+          el: '#waline',
+          serverURL: 'https://example.example.com',
+          lang: 'zh-CN',
+          dark: 'body[class~="dark-mode"]',
+          reaction: false,
+          requiredMeta: ['nick', 'mail'],
+          emoji: [],
+          recaptchaV3Key: "wasd",
+          
+        });
+      }
+
+      if (typeof swup !== 'undefined') {
+        loadWaline();
+      } else {
+        window.addEventListener('DOMContentLoaded', loadWaline);
+      }
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">Frida学习-Frida spwn模式启动APP流程学习</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#App%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B"><span class="nav-text">App启动流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#frida-spawn%E5%90%AF%E5%8A%A8%E5%88%86%E6%9E%90"><span class="nav-text">frida spawn启动分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%80%BB%E7%BB%93"><span class="nav-text">启动流程总结</span></a></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">两只羊</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 30 篇文章
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.8.2</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container">
+	<img src="">
+</div>
+
+	
+
+</main>
+
+
+
+<script src="/js/build/libs/Swup.min.js"></script>
+
+<script src="/js/build/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/build/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupScrollPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupPreloadPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+</script>
+
+
+
+
+	
+<script src="/js/build/tools/imageViewer.js" type="module"></script>
+
+<script src="/js/build/utils.js" type="module"></script>
+
+<script src="/js/build/main.js" type="module"></script>
+
+<script src="/js/build/layouts/navbarShrink.js" type="module"></script>
+
+<script src="/js/build/tools/scrollTopBottom.js" type="module"></script>
+
+<script src="/js/build/tools/lightDarkSwitch.js" type="module"></script>
+
+<script src="/js/build/layouts/categoryList.js" type="module"></script>
+
+
+
+
+
+    
+<script src="/js/build/tools/codeBlock.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/layouts/lazyload.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/tools/runtime.js"></script>
+
+    
+<script src="/js/build/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/build/libs/Typed.min.js"></script>
+
+  
+<script src="/js/build/plugins/typed.js" type="module"></script>
+
+
+
+
+
+
+
+
+
+
+
+    
+<script src="/js/build/tools/tocToggle.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/layouts/toc.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/plugins/tabs.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+<script src="/js/build/libs/moment-with-locales.min.js" data-swup-reload-script=""></script>
+
+
+<script src="/js/build/layouts/essays.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+
+	
+</body>
+
+</html>
